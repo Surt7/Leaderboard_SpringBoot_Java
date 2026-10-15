@@ -1,0 +1,41 @@
+name: worldpinball-java-dev
+
+services:
+  db:
+    image: postgres:16.15-alpine
+    container_name: worldpinball-java-db
+    environment:
+      POSTGRES_DB: worldpinball
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD must be set}
+    ports:
+      - "5433:5432"
+    volumes:
+      - worldpinball_java_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d worldpinball"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  redis:
+    image: redis:8.10.1-alpine
+    container_name: worldpinball-java-redis
+    command: ["redis-server", "--appendonly", "yes", "--requirepass", "${REDIS_PASSWORD:?REDIS_PASSWORD must be set}"]
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD:?REDIS_PASSWORD must be set}
+    ports:
+      - "6380:6379"
+    volumes:
+      - worldpinball_java_redisdata:/data
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli -a \"$$REDIS_PASSWORD\" ping | grep PONG"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+volumes:
+  worldpinball_java_pgdata:
+  worldpinball_java_redisdata:
