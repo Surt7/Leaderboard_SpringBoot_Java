@@ -19,4 +19,6 @@ public class LeaderboardEntryDto {
     private Instant achievedAtUtc;
     private int slotNumber;
     private UUID userId;
+    private String displayName;
+    private String initials;
 }
