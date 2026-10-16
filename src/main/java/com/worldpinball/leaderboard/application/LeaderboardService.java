@@ -2,7 +2,7 @@ package com.worldpinball.leaderboard.application;
 
 import com.worldpinball.leaderboard.application.dto.LeaderboardEntryDto;
 import com.worldpinball.leaderboard.application.dto.SubmitScoreRequest;
-import com.worldpinball.leaderboard.domain.ScoreEntry;
+import com.worldpinball.leaderboard.domain.entities.ScoreEntry;
 import com.worldpinball.leaderboard.infrastructure.ScoreEntryRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
@@ -34,18 +34,15 @@ public ScoreEntry submitScore(SubmitScoreRequest request) {
 
         Instant achievedAt = request.getAchievedAtUtc() != null ? request.getAchievedAtUtc() : Instant.now();
         ScoreEntry entry = new ScoreEntry(
-                UUID.randomUUID(),
-                request.getSlotNumber(),
                 request.getSessionId(),
-                request.getUserId(),
+                request.getSlotNumber(),
                 request.getDeviceId(),
                 request.getMachineId(),
                 request.getIpId(),
                 request.getModeId(),
                 request.getScore(),
                 achievedAt,
-                true,
-                null
+                request.getUserId()
         );
 
         return scoreEntryRepository.save(entry);

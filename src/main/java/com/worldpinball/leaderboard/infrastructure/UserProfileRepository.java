@@ -1,6 +1,6 @@
 package com.worldpinball.leaderboard.infrastructure;
 
-import com.worldpinball.leaderboard.domain.UserProfile;
+import com.worldpinball.leaderboard.domain.entities.UserProfile;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

@@ -1,9 +1,9 @@
-package com.worldpinball.leaderboard;
+package com.worldpinball.leaderboard.integration;
 
 import com.worldpinball.leaderboard.application.LeaderboardService;
 import com.worldpinball.leaderboard.application.dto.LeaderboardEntryDto;
 import com.worldpinball.leaderboard.application.dto.SubmitScoreRequest;
-import com.worldpinball.leaderboard.domain.*;
+import com.worldpinball.leaderboard.domain.entities.*;
 import com.worldpinball.leaderboard.infrastructure.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -21,7 +21,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @SpringBootTest
 @Transactional
-class LeaderboardServiceTest {
+class LeaderboardIntegrationTest {
 
     @Autowired
     private PublisherRepository publisherRepository;
@@ -53,27 +53,29 @@ class LeaderboardServiceTest {
     @BeforeEach
     void setUp() {
         Publisher publisher = publisherRepository.save(new Publisher(
-            UUID.randomUUID(), "Stern Pinball", "stern-" + UUID.randomUUID(), Instant.now()
+            "Stern Pinball", "stern-" + UUID.randomUUID(), Instant.now()
         ));
 
         ipLicense = ipLicenseRepository.save(new IpLicense(
-            UUID.randomUUID(), "Godzilla", "godzilla-" + UUID.randomUUID(), publisher.getPublisherId(), true, Instant.now()
+            "Godzilla", "godzilla-" + UUID.randomUUID(), publisher.getPublisherId(), true, Instant.now(), null
         ));
 
         gameMode = gameModeRepository.save(new GameMode(
-            UUID.randomUUID(), "std-" + UUID.randomUUID(), "Standard 3-Ball", true, Instant.now()
+            "std-" + UUID.randomUUID().toString().substring(0, 8), "Standard 3-Ball", "Standard 3-Ball Mode", true, Instant.now(), null
         ));
 
-        device = deviceRepository.save(new Device(
-            UUID.randomUUID(), "DEV-" + UUID.randomUUID(), "ACTIVE", 0, Instant.now()
+        device = deviceRepository.save(Device.createActive(
+            "DEV-" + UUID.randomUUID().toString().substring(0, 8), "dummy-public-key", "RSA", Instant.now(), null
         ));
 
-        machine = machineRepository.save(new Machine(
-            UUID.randomUUID(), ipLicense.getIpId(), "FLP-" + UUID.randomUUID().toString().substring(0, 8), "Godzilla Machine", "ACTIVE", UUID.randomUUID(), "nonce-" + UUID.randomUUID(), Instant.now()
-        ));
+        Machine rawMachine = new Machine(
+            ipLicense.getIpId(), "FLP-" + UUID.randomUUID().toString().substring(0, 8), "Godzilla Machine", Instant.now(), UUID.randomUUID(), "nonce-" + UUID.randomUUID(), null
+        );
+        rawMachine.completeEnrollment(Instant.now());
+        machine = machineRepository.save(rawMachine);
 
         session = gameSessionRepository.save(new GameSession(
-            UUID.randomUUID(), machine.getMachineId(), device.getDeviceId(), gameMode.getModeId(), Instant.now(), null, "STARTED", "nonce-" + UUID.randomUUID(), "1.0.0"
+            machine.getMachineId(), device.getDeviceId(), gameMode.getModeId(), "1.0.0", "nonce-" + UUID.randomUUID(), Instant.now(), null
         ));
     }
 

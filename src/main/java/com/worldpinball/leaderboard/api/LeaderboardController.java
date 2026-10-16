@@ -3,7 +3,7 @@ package com.worldpinball.leaderboard.api;
 import com.worldpinball.leaderboard.application.LeaderboardService;
 import com.worldpinball.leaderboard.application.dto.LeaderboardEntryDto;
 import com.worldpinball.leaderboard.application.dto.SubmitScoreRequest;
-import com.worldpinball.leaderboard.domain.ScoreEntry;
+import com.worldpinball.leaderboard.domain.entities.ScoreEntry;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;

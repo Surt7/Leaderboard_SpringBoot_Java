@@ -1,6 +1,6 @@
 package com.worldpinball.leaderboard.infrastructure;
 
-import com.worldpinball.leaderboard.domain.GameMode;
+import com.worldpinball.leaderboard.domain.entities.GameMode;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
