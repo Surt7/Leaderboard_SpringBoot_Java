@@ -1,4 +1,4 @@
-package com.worldpinball.leaderboard.application.features.leaderboard.queries;
+package com.worldpinball.leaderboard.application.features.leaderboard.getleaderboard;
 
 import com.worldpinball.leaderboard.application.features.leaderboard.dtos.LeaderboardRowDto;
 import com.worldpinball.leaderboard.domain.entities.IpLicense;

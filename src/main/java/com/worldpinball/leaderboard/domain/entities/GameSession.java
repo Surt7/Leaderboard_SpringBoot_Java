@@ -1,12 +1,17 @@
 package com.worldpinball.leaderboard.domain.entities;
 
 import com.worldpinball.leaderboard.domain.enums.GameSessionState;
+import com.worldpinball.leaderboard.domain.enums.TelemetryMode;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 
 @Entity
@@ -28,7 +33,24 @@ public class GameSession {
         public static final String PAUSE_SESSION = "Can only pause an active session.";
         public static final String RESUME_SESSION = "Can only resume a paused session.";
         public static final String CLOSED_SESSION = "Session is already closed.";
-        public static final String CANNOT_START_SESSION = "Can only start a session that is in Created state.";
+        public static final String ADD_PLAYER_NOT_STARTED = "Cannot add a player to a session that is not in a joinable state.";
+        public static final String INVALID_SLOT_NUMBER = "Slot number must be between 1 and 4.";
+        public static final String MAX_PLAYERS_REACHED = "A game session cannot have more than 4 players.";
+        public static final String SLOT_ALREADY_OCCUPIED = "The specified slot is already occupied.";
+        public static final String USER_ALREADY_REGISTERED = "This user is already registered in this session.";
+        public static final String REGISTERED_USER_REQUIRED = "A registered player (UserId) is required for this game mode or tournament.";
+        public static final String CANNOT_SEARCH_PLAYERS = "Can only search for players from a created, pending, or match-found session.";
+        public static final String MATCH_FOUND_NOT_SEARCHING = "Cannot mark match as found unless currently searching for players.";
+        public static final String NOT_ENOUGH_PLAYERS_FOR_MATCH = "Cannot mark match as found without enough players.";
+        public static final String CANNOT_REMOVE_PLAYER_ACTIVE_SESSION = "Cannot remove a player once the session has started or ended.";
+        public static final String PLAYER_NOT_FOUND = "Player not found in the specified slot.";
+        public static final String CANNOT_START_SESSION = "Can only start a session that is in Created or MatchFound state.";
+        public static final String CANNOT_CANCEL_SESSION = "Cannot cancel a session that is already active or closed.";
+        public static final String CANNOT_LAUNCH_SESSION = "Cannot launch a session that is not in a valid joinable state.";
+        public static final String AT_LEAST_ONE_PLAYER_REQUIRED = "Cannot launch a session without at least one player.";
+        public static final String CANNOT_RECORD_BALL_INACTIVE_SESSION = "Cannot record ball score on a session that is not active.";
+        public static final String INVALID_BALL_NUMBER = "Ball number must be between 1 and 5.";
+        public static final String INVALID_SCORE = "Score cannot be negative.";
     }
 
     @Id
@@ -59,6 +81,13 @@ public class GameSession {
 
     @Column(name = "client_version", length = 50)
     private String clientVersion;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "telemetry_mode", length = 30)
+    private TelemetryMode telemetryMode = TelemetryMode.BALL_CHECKPOINT_ONLY;
+
+    @OneToMany(mappedBy = "session", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    private List<GameSessionPlayer> players = new ArrayList<>();
 
     public GameSession(
         UUID machineId,
@@ -92,19 +121,127 @@ public class GameSession {
         this.clientVersion = clientVersion.trim();
         this.nonce = nonce.trim();
         this.startedAtUtc = startedAtUtc != null ? startedAtUtc : Instant.now();
-        this.state = GameSessionState.STARTED;
+        this.state = GameSessionState.CREATED;
+        this.telemetryMode = TelemetryMode.BALL_CHECKPOINT_ONLY;
     }
 
-    public void start(Instant now) {
-        if (this.state != GameSessionState.CREATED) {
-            throw new IllegalStateException(ErrorMessages.CANNOT_START_SESSION);
+    public List<GameSessionPlayer> getPlayers() {
+        return Collections.unmodifiableList(players);
+    }
+
+    // -------------------- Lobby & Matchmaking --------------------
+
+    public void addPlayer(int slotNumber, UUID userId, String guestInitials, boolean requiresRegisteredUser) {
+        if (this.state != GameSessionState.CREATED
+            && this.state != GameSessionState.PENDING
+            && this.state != GameSessionState.SEARCHING_PLAYER
+            && this.state != GameSessionState.JOINED
+            && this.state != GameSessionState.STARTED
+            && this.state != GameSessionState.RESUMED) {
+            throw new IllegalStateException(ErrorMessages.ADD_PLAYER_NOT_STARTED);
         }
+
+        if (slotNumber < 1 || slotNumber > 4) {
+            throw new IllegalArgumentException(ErrorMessages.INVALID_SLOT_NUMBER);
+        }
+
+        if (requiresRegisteredUser && userId == null) {
+            throw new IllegalStateException(ErrorMessages.REGISTERED_USER_REQUIRED);
+        }
+
+        if (players.size() >= 4) {
+            throw new IllegalStateException(ErrorMessages.MAX_PLAYERS_REACHED);
+        }
+
+        if (players.stream().anyMatch(p -> p.getSlotNumber() == slotNumber)) {
+            throw new IllegalStateException(ErrorMessages.SLOT_ALREADY_OCCUPIED);
+        }
+
+        if (userId != null && players.stream().anyMatch(p -> Objects.equals(p.getUserId(), userId))) {
+            throw new IllegalStateException(ErrorMessages.USER_ALREADY_REGISTERED);
+        }
+
+        GameSessionPlayer player = new GameSessionPlayer(
+            this.sessionId,
+            slotNumber,
+            userId,
+            guestInitials,
+            Instant.now()
+        );
+        this.players.add(player);
+
+        if (this.state == GameSessionState.CREATED || this.state == GameSessionState.PENDING) {
+            this.state = GameSessionState.JOINED;
+        }
+    }
+
+    public void removePlayer(int slotNumber) {
+        if (this.state != GameSessionState.CREATED
+            && this.state != GameSessionState.PENDING
+            && this.state != GameSessionState.SEARCHING_PLAYER
+            && this.state != GameSessionState.MATCH_FOUND
+            && this.state != GameSessionState.JOINED) {
+            throw new IllegalStateException(ErrorMessages.CANNOT_REMOVE_PLAYER_ACTIVE_SESSION);
+        }
+
+        GameSessionPlayer player = players.stream()
+            .filter(p -> p.getSlotNumber() == slotNumber)
+            .findFirst()
+            .orElseThrow(() -> new IllegalStateException(ErrorMessages.PLAYER_NOT_FOUND));
+
+        this.players.remove(player);
+
+        if (this.state == GameSessionState.MATCH_FOUND) {
+            this.state = GameSessionState.PENDING;
+        }
+
+        if (this.players.isEmpty() && this.state == GameSessionState.JOINED) {
+            this.state = GameSessionState.CREATED;
+        }
+    }
+
+    public void searchPlayers() {
+        if (this.state != GameSessionState.CREATED
+            && this.state != GameSessionState.PENDING
+            && this.state != GameSessionState.JOINED
+            && this.state != GameSessionState.MATCH_FOUND) {
+            throw new IllegalStateException(ErrorMessages.CANNOT_SEARCH_PLAYERS);
+        }
+        this.state = GameSessionState.SEARCHING_PLAYER;
+    }
+
+    public void setMatchFound(Instant matchFoundAtUtc) {
+        if (this.state != GameSessionState.SEARCHING_PLAYER) {
+            throw new IllegalStateException(ErrorMessages.MATCH_FOUND_NOT_SEARCHING);
+        }
+        if (this.players.size() < 2) {
+            throw new IllegalStateException(ErrorMessages.NOT_ENOUGH_PLAYERS_FOR_MATCH);
+        }
+        this.state = GameSessionState.MATCH_FOUND;
+    }
+
+    // -------------------- Session Lifecycle --------------------
+
+    public void launch(Instant launchedAtUtc) {
+        if (this.state != GameSessionState.CREATED
+            && this.state != GameSessionState.PENDING
+            && this.state != GameSessionState.SEARCHING_PLAYER
+            && this.state != GameSessionState.JOINED) {
+            throw new IllegalStateException(ErrorMessages.CANNOT_LAUNCH_SESSION);
+        }
+
+        if (this.players.isEmpty()) {
+            throw new IllegalStateException(ErrorMessages.AT_LEAST_ONE_PLAYER_REQUIRED);
+        }
+
+        this.startedAtUtc = launchedAtUtc != null ? launchedAtUtc : Instant.now();
         this.state = GameSessionState.STARTED;
-        this.startedAtUtc = now != null ? now : Instant.now();
     }
 
     public void pause() {
-        if (this.state != GameSessionState.STARTED) {
+        if (this.state != GameSessionState.STARTED
+            && this.state != GameSessionState.IN_GAME
+            && this.state != GameSessionState.RESUMED) {
             throw new IllegalStateException(ErrorMessages.PAUSE_SESSION);
         }
         this.state = GameSessionState.PAUSED;
@@ -114,11 +251,14 @@ public class GameSession {
         if (this.state != GameSessionState.PAUSED) {
             throw new IllegalStateException(ErrorMessages.RESUME_SESSION);
         }
-        this.state = GameSessionState.STARTED;
+        this.state = GameSessionState.RESUMED;
     }
 
     public void endSession(Instant endedAtUtc) {
-        if (this.state != GameSessionState.STARTED) {
+        if (this.state != GameSessionState.STARTED
+            && this.state != GameSessionState.IN_GAME
+            && this.state != GameSessionState.RESUMED
+            && this.state != GameSessionState.PAUSED) {
             throw new IllegalStateException(ErrorMessages.END_SESSION);
         }
         Instant end = endedAtUtc != null ? endedAtUtc : Instant.now();
@@ -129,11 +269,72 @@ public class GameSession {
         this.endedAtUtc = end;
     }
 
+    public void abandon(Instant abandonedAtUtc) {
+        if (isClosed()) {
+            throw new IllegalStateException(ErrorMessages.CLOSED_SESSION);
+        }
+        Instant end = abandonedAtUtc != null ? abandonedAtUtc : Instant.now();
+        if (end.isBefore(this.startedAtUtc)) {
+            throw new IllegalArgumentException(ErrorMessages.EARLIER);
+        }
+        this.state = GameSessionState.ABANDONED;
+        this.endedAtUtc = end;
+    }
+
+    public void abort(Instant abortedAtUtc) {
+        if (isClosed()) {
+            throw new IllegalStateException(ErrorMessages.CLOSED_SESSION);
+        }
+        Instant end = abortedAtUtc != null ? abortedAtUtc : Instant.now();
+        if (end.isBefore(this.startedAtUtc)) {
+            throw new IllegalArgumentException(ErrorMessages.EARLIER);
+        }
+        this.state = GameSessionState.ABORTED;
+        this.endedAtUtc = end;
+    }
+
     public void cancel() {
-        if (this.state == GameSessionState.ENDED || this.state == GameSessionState.CANCELLED) {
+        if (isClosed()) {
             throw new IllegalStateException(ErrorMessages.CLOSED_SESSION);
         }
         this.state = GameSessionState.CANCELLED;
         this.endedAtUtc = Instant.now();
+    }
+
+    private boolean isClosed() {
+        return this.state == GameSessionState.ENDED
+            || this.state == GameSessionState.ABANDONED
+            || this.state == GameSessionState.ABORTED
+            || this.state == GameSessionState.CANCELLED;
+    }
+
+    // -------------------- Gameplay & Telemetry --------------------
+
+    public void recordBallScore(int slotNumber, int ballNumber, long score, Instant recordedAtUtc) {
+        if (this.state != GameSessionState.STARTED
+            && this.state != GameSessionState.IN_GAME
+            && this.state != GameSessionState.RESUMED) {
+            throw new IllegalStateException(ErrorMessages.CANNOT_RECORD_BALL_INACTIVE_SESSION);
+        }
+
+        boolean playerFound = players.stream().anyMatch(p -> p.getSlotNumber() == slotNumber);
+        if (!playerFound) {
+            throw new IllegalStateException(ErrorMessages.PLAYER_NOT_FOUND);
+        }
+
+        if (ballNumber < 1 || ballNumber > 5) {
+            throw new IllegalArgumentException(ErrorMessages.INVALID_BALL_NUMBER);
+        }
+
+        if (score < 0) {
+            throw new IllegalArgumentException(ErrorMessages.INVALID_SCORE);
+        }
+    }
+
+    public void enableLiveStreaming() {
+        if (isClosed()) {
+            throw new IllegalStateException(ErrorMessages.CLOSED_SESSION);
+        }
+        this.telemetryMode = TelemetryMode.LIVE_STREAMING;
     }
 }

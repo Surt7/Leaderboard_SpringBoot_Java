@@ -1,4 +1,4 @@
-package com.worldpinball.leaderboard.application.features.leaderboard.queries;
+package com.worldpinball.leaderboard.application.features.leaderboard.getplayerrank;
 
 import java.util.UUID;
 

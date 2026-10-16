@@ -1,13 +1,12 @@
 package com.worldpinball.leaderboard.api;
 
 import com.worldpinball.leaderboard.application.dto.SubmitScoreRequest;
-import com.worldpinball.leaderboard.application.features.leaderboard.dtos.LeaderboardRowDto;
-import com.worldpinball.leaderboard.application.features.leaderboard.queries.GetLeaderboardHandler;
-import com.worldpinball.leaderboard.application.features.leaderboard.queries.GetLeaderboardQuery;
-import com.worldpinball.leaderboard.application.features.leaderboard.queries.GetLeaderboardResult;
-import com.worldpinball.leaderboard.application.features.leaderboard.queries.GetPlayerRankHandler;
-import com.worldpinball.leaderboard.application.features.leaderboard.queries.GetPlayerRankQuery;
-import com.worldpinball.leaderboard.application.features.leaderboard.queries.GetPlayerRankResult;
+import com.worldpinball.leaderboard.application.features.leaderboard.getleaderboard.GetLeaderboardHandler;
+import com.worldpinball.leaderboard.application.features.leaderboard.getleaderboard.GetLeaderboardQuery;
+import com.worldpinball.leaderboard.application.features.leaderboard.getleaderboard.GetLeaderboardResult;
+import com.worldpinball.leaderboard.application.features.leaderboard.getplayerrank.GetPlayerRankHandler;
+import com.worldpinball.leaderboard.application.features.leaderboard.getplayerrank.GetPlayerRankQuery;
+import com.worldpinball.leaderboard.application.features.leaderboard.getplayerrank.GetPlayerRankResult;
 import com.worldpinball.leaderboard.application.features.submitscore.SubmitScoreHandler;
 import com.worldpinball.leaderboard.application.features.submitscore.SubmitScoreResult;
 import com.worldpinball.leaderboard.application.features.submitscore.commands.SubmitScoreCommand;
@@ -17,7 +16,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
 import java.util.UUID;
 
 @RestController

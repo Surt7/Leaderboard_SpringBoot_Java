@@ -1,0 +1,10 @@
+package com.worldpinball.leaderboard.application.services;
+
+import java.util.UUID;
+
+public interface LobbyNotificationService {
+    void notifyLobbyUpdated(UUID sessionId);
+    void notifySessionLaunched(UUID sessionId);
+    void notifySessionAborted(UUID sessionId);
+    void notifyScoreSubmitted(UUID sessionId, int slotNumber, long score);
+}
