@@ -1,8 +1,15 @@
 package com.worldpinball.leaderboard.integration;
 
-import com.worldpinball.leaderboard.application.LeaderboardService;
-import com.worldpinball.leaderboard.application.dto.LeaderboardEntryDto;
-import com.worldpinball.leaderboard.application.dto.SubmitScoreRequest;
+import com.worldpinball.leaderboard.application.features.leaderboard.dtos.LeaderboardRowDto;
+import com.worldpinball.leaderboard.application.features.leaderboard.queries.GetLeaderboardHandler;
+import com.worldpinball.leaderboard.application.features.leaderboard.queries.GetLeaderboardQuery;
+import com.worldpinball.leaderboard.application.features.leaderboard.queries.GetLeaderboardResult;
+import com.worldpinball.leaderboard.application.features.leaderboard.queries.GetPlayerRankHandler;
+import com.worldpinball.leaderboard.application.features.leaderboard.queries.GetPlayerRankQuery;
+import com.worldpinball.leaderboard.application.features.leaderboard.queries.GetPlayerRankResult;
+import com.worldpinball.leaderboard.application.features.submitscore.SubmitScoreHandler;
+import com.worldpinball.leaderboard.application.features.submitscore.SubmitScoreResult;
+import com.worldpinball.leaderboard.application.features.submitscore.commands.SubmitScoreCommand;
 import com.worldpinball.leaderboard.domain.entities.*;
 import com.worldpinball.leaderboard.infrastructure.*;
 import org.junit.jupiter.api.BeforeEach;
@@ -13,11 +20,9 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
-import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @SpringBootTest
 @Transactional
@@ -42,7 +47,13 @@ class LeaderboardIntegrationTest {
     private GameSessionRepository gameSessionRepository;
 
     @Autowired
-    private LeaderboardService leaderboardService;
+    private SubmitScoreHandler submitScoreHandler;
+
+    @Autowired
+    private GetLeaderboardHandler getLeaderboardHandler;
+
+    @Autowired
+    private GetPlayerRankHandler getPlayerRankHandler;
 
     private IpLicense ipLicense;
     private GameMode gameMode;
@@ -80,49 +91,70 @@ class LeaderboardIntegrationTest {
     }
 
     @Test
-    @DisplayName("Should submit scores, prevent slot duplicates, and calculate accurate ranking")
-    void testLeaderboardWorkflow() {
+    @DisplayName("Should submit scores via CQRS, prevent slot duplicates with Result pattern, and query rankings")
+    void testLeaderboardCqrsWorkflow() {
         // 1. Soumettre un premier score (250M) sur le slot 1
-        SubmitScoreRequest score1 = SubmitScoreRequest.builder()
-            .sessionId(session.getSessionId())
-            .slotNumber(1)
-            .deviceId(device.getDeviceId())
-            .machineId(machine.getMachineId())
-            .ipId(ipLicense.getIpId())
-            .modeId(gameMode.getModeId())
-            .score(250_000_000L)
-            .achievedAtUtc(Instant.now().minusSeconds(10))
-            .build();
-        leaderboardService.submitScore(score1);
+        SubmitScoreCommand cmd1 = new SubmitScoreCommand(
+            session.getSessionId(),
+            1,
+            device.getDeviceId(),
+            machine.getMachineId(),
+            ipLicense.getIpId(),
+            gameMode.getModeId(),
+            250_000_000L,
+            Instant.now().minusSeconds(10),
+            null
+        );
+        SubmitScoreResult result1 = submitScoreHandler.handle(cmd1);
+        assertThat(result1).isInstanceOf(SubmitScoreResult.Success.class);
 
-        // 2. Tenter de soumettre à nouveau sur le slot 1 (doit échouer)
-        assertThatThrownBy(() -> leaderboardService.submitScore(score1))
-            .isInstanceOf(IllegalStateException.class)
-            .hasMessageContaining("already exists");
+        // 2. Tenter de soumettre à nouveau sur le slot 1 (Result Pattern: SlotAlreadyOccupied)
+        SubmitScoreResult duplicateResult = submitScoreHandler.handle(cmd1);
+        assertThat(duplicateResult).isInstanceOf(SubmitScoreResult.SlotAlreadyOccupied.class);
 
         // 3. Soumettre un score supérieur (500M) sur le slot 2
-        SubmitScoreRequest score2 = SubmitScoreRequest.builder()
-            .sessionId(session.getSessionId())
-            .slotNumber(2)
-            .deviceId(device.getDeviceId())
-            .machineId(machine.getMachineId())
-            .ipId(ipLicense.getIpId())
-            .modeId(gameMode.getModeId())
-            .score(500_000_000L)
-            .achievedAtUtc(Instant.now())
-            .build();
-        leaderboardService.submitScore(score2);
+        SubmitScoreCommand cmd2 = new SubmitScoreCommand(
+            session.getSessionId(),
+            2,
+            device.getDeviceId(),
+            machine.getMachineId(),
+            ipLicense.getIpId(),
+            gameMode.getModeId(),
+            500_000_000L,
+            Instant.now(),
+            null
+        );
+        SubmitScoreResult result2 = submitScoreHandler.handle(cmd2);
+        assertThat(result2).isInstanceOf(SubmitScoreResult.Success.class);
 
-        // 4. Vérifier le Top 10 (le score de 500M doit être rang 1, 250M rang 2)
-        List<LeaderboardEntryDto> topScores = leaderboardService.getTopScores(ipLicense.getIpId(), gameMode.getModeId(), 10);
-        assertThat(topScores).hasSize(2);
-        assertThat(topScores.get(0).getRank()).isEqualTo(1);
-        assertThat(topScores.get(0).getScore()).isEqualTo(500_000_000L);
-        assertThat(topScores.get(1).getRank()).isEqualTo(2);
-        assertThat(topScores.get(1).getScore()).isEqualTo(250_000_000L);
+        // 4. Exécuter la Query GetLeaderboard (Top 10)
+        GetLeaderboardQuery query = new GetLeaderboardQuery(
+            ipLicense.getIpId(),
+            gameMode.getModeId(),
+            null,
+            null,
+            10
+        );
+        GetLeaderboardResult queryResult = getLeaderboardHandler.handle(query);
+        assertThat(queryResult).isInstanceOf(GetLeaderboardResult.Success.class);
 
-        // 5. Vérifier le calcul du rang dynamique
-        long rankFor300M = leaderboardService.getRank(ipLicense.getIpId(), gameMode.getModeId(), 300_000_000L);
-        assertThat(rankFor300M).isEqualTo(2); // Seul 500M est supérieur, donc rang 2
+        var rows = ((GetLeaderboardResult.Success) queryResult).rows();
+        assertThat(rows).hasSize(2);
+        assertThat(rows.get(0).rank()).isEqualTo(1);
+        assertThat(rows.get(0).score()).isEqualTo(500_000_000L);
+        assertThat(rows.get(1).rank()).isEqualTo(2);
+        assertThat(rows.get(1).score()).isEqualTo(250_000_000L);
+
+        // 5. Exécuter la Query GetPlayerRank pour un score de 300M
+        GetPlayerRankQuery rankQuery = new GetPlayerRankQuery(
+            ipLicense.getIpId(),
+            gameMode.getModeId(),
+            300_000_000L
+        );
+        GetPlayerRankResult rankResult = getPlayerRankHandler.handle(rankQuery);
+        assertThat(rankResult).isInstanceOf(GetPlayerRankResult.Success.class);
+
+        long rank = ((GetPlayerRankResult.Success) rankResult).rank();
+        assertThat(rank).isEqualTo(2); // Seul 500M est supérieur, donc rang 2
     }
 }
