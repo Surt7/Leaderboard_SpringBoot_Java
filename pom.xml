@@ -24,6 +24,8 @@
 		<netty.version>4.1.131.Final</netty.version>
 		<assertj.version>3.27.3</assertj.version>
 		<commons-lang3.version>3.18.0</commons-lang3.version>
+		<datafaker.version>2.4.2</datafaker.version>
+		<instancio.version>5.3.0</instancio.version>
 	</properties>
 	<dependencies>
 		<dependency>
@@ -60,6 +62,18 @@
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-test</artifactId>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>net.datafaker</groupId>
+			<artifactId>datafaker</artifactId>
+			<version>${datafaker.version}</version>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.instancio</groupId>
+			<artifactId>instancio-junit</artifactId>
+			<version>${instancio.version}</version>
 			<scope>test</scope>
 		</dependency>
 	</dependencies>

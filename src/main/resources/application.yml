@@ -8,7 +8,7 @@ spring:
   datasource:
     url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5433}/${DB_NAME:worldpinball}
     username: ${DB_USER:postgres}
-    password: ${POSTGRES_PASSWORD:}
+    password: ${POSTGRES_PASSWORD:Surt7*!}
     driver-class-name: org.postgresql.Driver
     hikari:
       connection-timeout: 30000
