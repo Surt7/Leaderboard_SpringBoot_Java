@@ -131,6 +131,10 @@ public class GameSession {
 
     // -------------------- Lobby & Matchmaking --------------------
 
+    public void addPlayer(int slotNumber, UUID userId) {
+        addPlayer(slotNumber, userId, null, false);
+    }
+
     public void addPlayer(int slotNumber, UUID userId, String guestInitials, boolean requiresRegisteredUser) {
         if (this.state != GameSessionState.CREATED
             && this.state != GameSessionState.PENDING

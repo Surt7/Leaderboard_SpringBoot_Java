@@ -7,4 +7,5 @@ public interface LobbyNotificationService {
     void notifySessionLaunched(UUID sessionId);
     void notifySessionAborted(UUID sessionId);
     void notifyScoreSubmitted(UUID sessionId, int slotNumber, long score);
+    void notifyMatchFound(UUID sessionId, UUID machineId);
 }
