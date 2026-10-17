@@ -51,6 +51,9 @@ public class Machine {
     @Column(name = "nonce", length = 64, nullable = false)
     private String nonce;
 
+    @Column(name = "machine_notes")
+    private String machineNotes;
+
     @Column(name = "registered_at_utc", nullable = false)
     private Instant registeredAtUtc;
 
