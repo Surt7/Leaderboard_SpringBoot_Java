@@ -1,7 +1,7 @@
 package com.worldpinball.leaderboard.integration;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.worldpinball.leaderboard.application.features.machines.admin.provision.dtos.ProvisionMachineRequest;
+import com.worldpinball.leaderboard.application.features.machines.Admin.provision.dtos.ProvisionMachineRequest;
 import com.worldpinball.leaderboard.domain.entities.IpLicense;
 import com.worldpinball.leaderboard.domain.entities.Publisher;
 import com.worldpinball.leaderboard.infrastructure.IpLicenseRepository;

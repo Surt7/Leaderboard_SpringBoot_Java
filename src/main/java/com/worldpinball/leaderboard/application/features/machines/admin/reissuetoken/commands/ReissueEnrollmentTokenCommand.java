@@ -1,8 +1,0 @@
-package com.worldpinball.leaderboard.application.features.machines.admin.reissuetoken.commands;
-
-import java.util.UUID;
-
-public record ReissueEnrollmentTokenCommand(
-        UUID machineId,
-        String issuedByUserId
-) {}

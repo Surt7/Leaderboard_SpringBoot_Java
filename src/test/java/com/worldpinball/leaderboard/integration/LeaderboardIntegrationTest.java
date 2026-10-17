@@ -1,14 +1,14 @@
 package com.worldpinball.leaderboard.integration;
 
-import com.worldpinball.leaderboard.application.features.leaderboard.getleaderboard.GetLeaderboardHandler;
-import com.worldpinball.leaderboard.application.features.leaderboard.getleaderboard.GetLeaderboardQuery;
-import com.worldpinball.leaderboard.application.features.leaderboard.getleaderboard.GetLeaderboardResult;
-import com.worldpinball.leaderboard.application.features.leaderboard.getplayerrank.GetPlayerRankHandler;
-import com.worldpinball.leaderboard.application.features.leaderboard.getplayerrank.GetPlayerRankQuery;
-import com.worldpinball.leaderboard.application.features.leaderboard.getplayerrank.GetPlayerRankResult;
-import com.worldpinball.leaderboard.application.features.submitscore.SubmitScoreHandler;
-import com.worldpinball.leaderboard.application.features.submitscore.SubmitScoreResult;
-import com.worldpinball.leaderboard.application.features.submitscore.commands.SubmitScoreCommand;
+import com.worldpinball.leaderboard.application.features.leaderboard.Public.getleaderboard.GetLeaderboardHandler;
+import com.worldpinball.leaderboard.application.features.leaderboard.Public.getleaderboard.GetLeaderboardQuery;
+import com.worldpinball.leaderboard.application.features.leaderboard.Public.getleaderboard.GetLeaderboardResult;
+import com.worldpinball.leaderboard.application.features.leaderboard.Public.getplayerrank.GetPlayerRankHandler;
+import com.worldpinball.leaderboard.application.features.leaderboard.Public.getplayerrank.GetPlayerRankQuery;
+import com.worldpinball.leaderboard.application.features.leaderboard.Public.getplayerrank.GetPlayerRankResult;
+import com.worldpinball.leaderboard.application.features.gamesessions.Public.submitscore.SubmitScoreHandler;
+import com.worldpinball.leaderboard.application.features.gamesessions.Public.submitscore.SubmitScoreResult;
+import com.worldpinball.leaderboard.application.features.gamesessions.Public.submitscore.commands.SubmitScoreCommand;
 import com.worldpinball.leaderboard.domain.entities.*;
 import com.worldpinball.leaderboard.infrastructure.*;
 import org.junit.jupiter.api.BeforeEach;

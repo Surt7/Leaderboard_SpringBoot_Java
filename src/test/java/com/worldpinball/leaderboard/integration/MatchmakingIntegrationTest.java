@@ -1,11 +1,11 @@
 package com.worldpinball.leaderboard.integration;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.worldpinball.leaderboard.application.features.matchmaking.joinqueue.JoinMatchmakingQueueRequest;
-import com.worldpinball.leaderboard.application.features.matchmaking.leavequeue.LeaveMatchmakingQueueRequest;
-import com.worldpinball.leaderboard.application.features.matchmaking.matchnextplayer.MatchNextPlayerCommand;
-import com.worldpinball.leaderboard.application.features.matchmaking.matchnextplayer.MatchNextPlayerHandler;
-import com.worldpinball.leaderboard.application.features.matchmaking.matchnextplayer.MatchNextPlayerResult;
+import com.worldpinball.leaderboard.application.features.matchmaking.Public.joinqueue.JoinMatchmakingQueueRequest;
+import com.worldpinball.leaderboard.application.features.matchmaking.Public.leavequeue.LeaveMatchmakingQueueRequest;
+import com.worldpinball.leaderboard.application.features.matchmaking.Public.matchnextplayer.MatchNextPlayerCommand;
+import com.worldpinball.leaderboard.application.features.matchmaking.Public.matchnextplayer.MatchNextPlayerHandler;
+import com.worldpinball.leaderboard.application.features.matchmaking.Public.matchnextplayer.MatchNextPlayerResult;
 import com.worldpinball.leaderboard.domain.entities.*;
 import com.worldpinball.leaderboard.domain.enums.TelemetryMode;
 import com.worldpinball.leaderboard.infrastructure.*;
