@@ -7,4 +7,6 @@ import org.springframework.stereotype.Repository;
 import java.util.UUID;
 
 @Repository
-public interface DeviceRepository extends JpaRepository<Device, UUID> {}
+public interface DeviceRepository extends JpaRepository<Device, UUID> {
+    boolean existsBySerialPhysical(String serialPhysical);
+}
