@@ -1,5 +1,9 @@
 package com.worldpinball.leaderboard.api.controllers;
 
+import com.worldpinball.leaderboard.application.features.leaderboard.admin.dashboard.GetMachineDashboardHandler;
+import com.worldpinball.leaderboard.application.features.leaderboard.admin.dashboard.GetMachineDashboardQuery;
+import com.worldpinball.leaderboard.application.features.leaderboard.admin.dashboard.GetMachineDashboardResult;
+import com.worldpinball.leaderboard.application.features.leaderboard.admin.dashboard.MachineDashboardDto;
 import com.worldpinball.leaderboard.application.features.machines.admin.getallmachines.GetAllMachinesHandler;
 import com.worldpinball.leaderboard.application.features.machines.admin.getallmachines.GetAllMachinesQuery;
 import com.worldpinball.leaderboard.application.features.machines.admin.getallmachines.GetAllMachinesResult;
@@ -37,15 +41,18 @@ public class AdminMachinesController {
     private final GetAllMachinesHandler getAllMachinesHandler;
     private final ProvisionMachineHandler provisionMachineHandler;
     private final ReissueEnrollmentTokenHandler reissueEnrollmentTokenHandler;
+    private final GetMachineDashboardHandler getMachineDashboardHandler;
 
     public AdminMachinesController(
             GetAllMachinesHandler getAllMachinesHandler,
             ProvisionMachineHandler provisionMachineHandler,
-            ReissueEnrollmentTokenHandler reissueEnrollmentTokenHandler
+            ReissueEnrollmentTokenHandler reissueEnrollmentTokenHandler,
+            GetMachineDashboardHandler getMachineDashboardHandler
     ) {
         this.getAllMachinesHandler = getAllMachinesHandler;
         this.provisionMachineHandler = provisionMachineHandler;
         this.reissueEnrollmentTokenHandler = reissueEnrollmentTokenHandler;
+        this.getMachineDashboardHandler = getMachineDashboardHandler;
     }
 
     @GetMapping
@@ -138,6 +145,23 @@ public class AdminMachinesController {
                     .body(Map.of("message", "Machine with ID '" + notFound.machineId() + "' could not be found."));
             case ReissueEnrollmentTokenResult.InvalidMachineStatus invalid -> ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(Map.of("message", "Cannot reissue token: Machine is in status '" + invalid.status() + "' (expected PendingEnrollment)."));
+        };
+    }
+
+    @GetMapping("/{machineId}/dashboard")
+    @Operation(summary = "Retrieves aggregate statistics for a machine dashboard")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Dashboard stats retrieved successfully",
+                    content = @Content(schema = @Schema(implementation = MachineDashboardDto.class))),
+            @ApiResponse(responseCode = "404", description = "Machine statistics not found")
+    })
+    public ResponseEntity<?> getDashboard(@PathVariable UUID machineId) {
+        GetMachineDashboardResult result = getMachineDashboardHandler.handle(new GetMachineDashboardQuery(machineId));
+
+        return switch (result) {
+            case GetMachineDashboardResult.Success success -> ResponseEntity.ok(success.stats());
+            case GetMachineDashboardResult.NotFound notFound -> ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(Map.of("message", "Machine '" + notFound.machineId() + "' not found."));
         };
     }
 }

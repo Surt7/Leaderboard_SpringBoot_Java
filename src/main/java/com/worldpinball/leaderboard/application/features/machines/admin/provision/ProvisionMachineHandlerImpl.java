@@ -80,7 +80,7 @@ public class ProvisionMachineHandlerImpl implements ProvisionMachineHandler {
                 nonce,
                 UUID.randomUUID()
         );
-        machineRepository.save(machine);
+        machineRepository.saveAndFlush(machine);
 
         SecretGenerationResult secret = secretService.generate();
         EnrollmentToken enrollmentToken = new EnrollmentToken(

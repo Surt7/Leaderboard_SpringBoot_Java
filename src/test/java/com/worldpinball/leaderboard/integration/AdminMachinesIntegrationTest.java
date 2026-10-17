@@ -154,4 +154,30 @@ class AdminMachinesIntegrationTest {
                 .andExpect(jsonPath("$.enrollmentToken").isNotEmpty())
                 .andExpect(jsonPath("$.expiresAtUtc").isNotEmpty());
     }
+
+    @Test
+    @DisplayName("Retrieve machine dashboard stats")
+    void shouldRetrieveMachineDashboard() throws Exception {
+        ProvisionMachineRequest req = new ProvisionMachineRequest(
+                "WP-GODZILLA-DASH",
+                "godzilla",
+                "Godzilla Pro Dash"
+        );
+
+        MvcResult result = mockMvc.perform(post("/api/v1/admin/machines/provision")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(req)))
+                .andExpect(status().isOk())
+                .andReturn();
+
+        Map<?, ?> map = objectMapper.readValue(result.getResponse().getContentAsString(), Map.class);
+        String machineId = (String) map.get("machineId");
+
+        mockMvc.perform(get("/api/v1/admin/machines/" + machineId + "/dashboard"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.machineId").value(machineId))
+                .andExpect(jsonPath("$.serialNumber").value("WP-GODZILLA-DASH"))
+                .andExpect(jsonPath("$.totalGamesPlayed").value(0))
+                .andExpect(jsonPath("$.highScore").value(0));
+    }
 }
