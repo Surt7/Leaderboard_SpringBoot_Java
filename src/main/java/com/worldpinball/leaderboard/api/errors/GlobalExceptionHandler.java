@@ -1,6 +1,6 @@
-package com.worldpinball.leaderboard.api;
+package com.worldpinball.leaderboard.api.errors;
 
-import com.worldpinball.leaderboard.api.dto.ApiErrorResponse;
+import com.worldpinball.leaderboard.api.dtos.ApiErrorResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;

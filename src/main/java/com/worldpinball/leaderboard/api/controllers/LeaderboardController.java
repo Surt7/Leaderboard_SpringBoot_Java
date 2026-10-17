@@ -1,4 +1,4 @@
-package com.worldpinball.leaderboard.api;
+package com.worldpinball.leaderboard.api.controllers;
 
 import com.worldpinball.leaderboard.application.dto.SubmitScoreRequest;
 import com.worldpinball.leaderboard.application.features.leaderboard.getleaderboard.GetLeaderboardHandler;

@@ -4,7 +4,12 @@ import com.worldpinball.leaderboard.domain.entities.IpLicense;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @Repository
-public interface IpLicenseRepository extends JpaRepository<IpLicense, UUID> {}
+public interface IpLicenseRepository extends JpaRepository<IpLicense, UUID> {
+    Optional<IpLicense> findBySlugIgnoreCaseAndActiveTrue(String slug);
+    List<IpLicense> findAllByActiveTrueOrderByNameAsc();
+}

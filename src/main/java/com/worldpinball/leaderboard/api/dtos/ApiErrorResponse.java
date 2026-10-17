@@ -1,4 +1,4 @@
-package com.worldpinball.leaderboard.api.dto;
+package com.worldpinball.leaderboard.api.dtos;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.AllArgsConstructor;

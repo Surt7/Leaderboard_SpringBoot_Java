@@ -1,4 +1,4 @@
-package com.worldpinball.leaderboard.api;
+package com.worldpinball.leaderboard.api.controllers;
 
 import com.worldpinball.leaderboard.api.dtos.SessionContracts.*;
 import com.worldpinball.leaderboard.application.features.gamesessions.abortsession.AbortSessionHandler;
