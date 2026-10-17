@@ -10,8 +10,8 @@ import java.time.Clock;
 public class LeaderboardSpringBootJavaApplication {
 
 	public static void main(String[] args) {
-		if (System.getProperty("app.seeder.enabled") == null) {
-			System.setProperty("app.seeder.enabled", "true");
+		if (System.getProperty("spring.profiles.active") == null && System.getenv("SPRING_PROFILES_ACTIVE") == null) {
+			System.setProperty("spring.profiles.active", "dev");
 		}
 		SpringApplication.run(LeaderboardSpringBootJavaApplication.class, args);
 	}
