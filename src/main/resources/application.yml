@@ -37,3 +37,4 @@ logging:
   level:
     root: INFO
     com.worldpinball.leaderboard: DEBUG
+

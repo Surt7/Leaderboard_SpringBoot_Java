@@ -10,6 +10,9 @@ import java.time.Clock;
 public class LeaderboardSpringBootJavaApplication {
 
 	public static void main(String[] args) {
+		if (System.getProperty("app.seeder.enabled") == null) {
+			System.setProperty("app.seeder.enabled", "true");
+		}
 		SpringApplication.run(LeaderboardSpringBootJavaApplication.class, args);
 	}
 	@Bean
