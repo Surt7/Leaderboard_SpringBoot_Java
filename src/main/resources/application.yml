@@ -59,7 +59,30 @@ spring:
       ack-mode: manual_immediate
       auto-startup: ${KAFKA_LISTENER_AUTO_STARTUP:false}
 
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus,metrics
+  endpoint:
+    health:
+      show-details: always
+      probes:
+        enabled: true
+  tracing:
+    sampling:
+      probability: ${OTEL_TRACES_SAMPLER_ARG:1.0}
+  otlp:
+    tracing:
+      endpoint: ${OTEL_EXPORTER_OTLP_TRACES_ENDPOINT:http://localhost:4318/v1/traces}
+    metrics:
+      export:
+        enabled: ${OTEL_METRICS_EXPORTER_ENABLED:false}
+        url: ${OTEL_EXPORTER_OTLP_METRICS_ENDPOINT:http://localhost:4318/v1/metrics}
+
 logging:
+  pattern:
+    level: "%5p [${spring.application.name:},%X{CorrelationId:-},%X{GameSessionId:-}]"
   level:
     root: INFO
     com.worldpinball.leaderboard: DEBUG
