@@ -1,5 +1,6 @@
 package com.worldpinball.leaderboard.api.controllers.Admin;
 
+import com.worldpinball.leaderboard.api.filters.idempotency.Idempotent;
 import com.worldpinball.leaderboard.application.features.leaderboard.Admin.dashboard.GetMachineDashboardHandler;
 import com.worldpinball.leaderboard.application.features.leaderboard.Admin.dashboard.GetMachineDashboardQuery;
 import com.worldpinball.leaderboard.application.features.leaderboard.Admin.dashboard.GetMachineDashboardResult;
@@ -73,6 +74,7 @@ public class AdminMachinesController {
     }
 
     @PostMapping("/provision")
+    @Idempotent(expirationMinutes = 30)
     @Operation(summary = "Creates a new machine and generates an enrollment token")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Machine successfully provisioned",

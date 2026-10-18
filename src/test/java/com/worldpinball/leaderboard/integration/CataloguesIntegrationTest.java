@@ -64,12 +64,13 @@ class CataloguesIntegrationTest {
     @DisplayName("GET /api/v1/ip-licenses - should return active IP licenses with publisher")
     void shouldReturnActiveIpLicenses() throws Exception {
         // Arrange
-        Publisher publisher = new Publisher("Williams Pinball", "williams", Instant.now());
+        String uniqueSlug = "medieval-madness-" + UUID.randomUUID().toString().substring(0, 8);
+        Publisher publisher = new Publisher("Williams Pinball", "williams-" + UUID.randomUUID().toString().substring(0, 8), Instant.now());
         publisherRepository.save(publisher);
 
         IpLicense license = new IpLicense(
                 "Medieval Madness",
-                "medieval-madness",
+                uniqueSlug,
                 publisher.getPublisherId(),
                 true,
                 Instant.now(),
@@ -82,7 +83,7 @@ class CataloguesIntegrationTest {
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", not(empty())))
-                .andExpect(jsonPath("$[?(@.slug == 'medieval-madness')].name").value("Medieval Madness"))
-                .andExpect(jsonPath("$[?(@.slug == 'medieval-madness')].publisher.name").value("Williams Pinball"));
+                .andExpect(jsonPath("$[?(@.slug == '" + uniqueSlug + "')].name").value("Medieval Madness"))
+                .andExpect(jsonPath("$[?(@.slug == '" + uniqueSlug + "')].publisher.name").value("Williams Pinball"));
     }
 }

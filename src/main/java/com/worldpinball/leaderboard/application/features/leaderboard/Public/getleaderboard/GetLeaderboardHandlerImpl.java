@@ -1,8 +1,9 @@
 package com.worldpinball.leaderboard.application.features.leaderboard.Public.getleaderboard;
 
 import com.worldpinball.leaderboard.application.features.leaderboard.Public.dtos.LeaderboardRowDto;
-import com.worldpinball.leaderboard.domain.entities.IpLicense;
+import com.worldpinball.leaderboard.application.services.RealtimeLeaderboardService;
 import com.worldpinball.leaderboard.domain.entities.GameMode;
+import com.worldpinball.leaderboard.domain.entities.IpLicense;
 import com.worldpinball.leaderboard.domain.entities.ScoreEntry;
 import com.worldpinball.leaderboard.domain.entities.UserProfile;
 import com.worldpinball.leaderboard.infrastructure.GameModeRepository;
@@ -15,6 +16,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -25,22 +27,35 @@ import java.util.UUID;
 @Slf4j
 public class GetLeaderboardHandlerImpl implements GetLeaderboardHandler {
 
+    private static final Duration CACHE_TTL = Duration.ofMinutes(1);
+
     private final ScoreEntryRepository scoreEntryRepository;
     private final IpLicenseRepository ipLicenseRepository;
     private final GameModeRepository gameModeRepository;
     private final UserProfileRepository userProfileRepository;
+    private final RealtimeLeaderboardService realtimeLeaderboardService;
 
     @Override
     @Transactional(readOnly = true)
     public GetLeaderboardResult handle(GetLeaderboardQuery query) {
+        int limit = Math.clamp(query.limit(), 1, 200);
         UUID ipId = query.ipId();
         UUID modeId = query.modeId();
 
-        // Resolve by slugs if GUIDs are not provided
+        // 1. Fast-path cache check if both UUIDs are already known
+        if (ipId != null && modeId != null) {
+            Optional<List<LeaderboardRowDto>> cached =
+                    realtimeLeaderboardService.getCachedLeaderboard(ipId, modeId, limit);
+            if (cached.isPresent()) {
+                return new GetLeaderboardResult.Success(cached.get());
+            }
+        }
+
+        // 2. Resolve by slugs if UUIDs are not provided
         if (ipId == null && query.ipSlug() != null && !query.ipSlug().isBlank()) {
             Optional<IpLicense> ipOpt = ipLicenseRepository.findAll().stream()
-                .filter(i -> query.ipSlug().equalsIgnoreCase(i.getSlug()))
-                .findFirst();
+                    .filter(i -> query.ipSlug().equalsIgnoreCase(i.getSlug()))
+                    .findFirst();
             if (ipOpt.isPresent()) {
                 ipId = ipOpt.get().getIpId();
             }
@@ -48,8 +63,8 @@ public class GetLeaderboardHandlerImpl implements GetLeaderboardHandler {
 
         if (modeId == null && query.modeCode() != null && !query.modeCode().isBlank()) {
             Optional<GameMode> modeOpt = gameModeRepository.findAll().stream()
-                .filter(m -> query.modeCode().equalsIgnoreCase(m.getCode()))
-                .findFirst();
+                    .filter(m -> query.modeCode().equalsIgnoreCase(m.getCode()))
+                    .findFirst();
             if (modeOpt.isPresent()) {
                 modeId = modeOpt.get().getModeId();
             }
@@ -57,19 +72,19 @@ public class GetLeaderboardHandlerImpl implements GetLeaderboardHandler {
 
         if (ipId == null || modeId == null) {
             return new GetLeaderboardResult.InvalidParameters(
-                "Either (ipId and modeId) or valid (ipSlug and modeCode) must be provided."
+                    "Either (ipId and modeId) or valid (ipSlug and modeCode) must be provided."
             );
         }
 
         String ipName = ipLicenseRepository.findById(ipId)
-            .map(IpLicense::getName)
-            .orElse("Unknown IP");
+                .map(IpLicense::getName)
+                .orElse("Unknown IP");
 
         String modeName = gameModeRepository.findById(modeId)
-            .map(GameMode::getName)
-            .orElse("Unknown Mode");
+                .map(GameMode::getName)
+                .orElse("Unknown Mode");
 
-        var page = PageRequest.of(0, query.limit());
+        var page = PageRequest.of(0, limit);
         List<ScoreEntry> scores = scoreEntryRepository.findTopScoresByIpAndMode(ipId, modeId, page);
 
         List<LeaderboardRowDto> rows = new ArrayList<>();
@@ -88,16 +103,19 @@ public class GetLeaderboardHandlerImpl implements GetLeaderboardHandler {
             }
 
             rows.add(new LeaderboardRowDto(
-                currentRank++,
-                score.getScoreEntryId(),
-                initials,
-                playerName,
-                score.getScore(),
-                score.getAchievedAtUtc(),
-                ipName,
-                modeName
+                    currentRank++,
+                    score.getScoreEntryId(),
+                    initials,
+                    playerName,
+                    score.getScore(),
+                    score.getAchievedAtUtc(),
+                    ipName,
+                    modeName
             ));
         }
+
+        // 3. Populate Redis DTO cache (TTL 1 minute)
+        realtimeLeaderboardService.setCachedLeaderboard(ipId, modeId, limit, rows, CACHE_TTL);
 
         return new GetLeaderboardResult.Success(rows);
     }

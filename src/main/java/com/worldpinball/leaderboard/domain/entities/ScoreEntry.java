@@ -1,5 +1,6 @@
 package com.worldpinball.leaderboard.domain.entities;
 
+import com.worldpinball.leaderboard.domain.events.ScoreSubmittedDomainEvent;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -10,7 +11,7 @@ import java.util.UUID;
 @Table(name = "score_entries")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class ScoreEntry {
+public class ScoreEntry extends BaseEntity {
 
     public static final class ErrorMessages {
         private ErrorMessages() {} // Constructeur privé pour empêcher d'instancier la classe d'erreurs
@@ -107,6 +108,18 @@ public class ScoreEntry {
         this.achievedAtUtc = achievedAtUtc != null ? achievedAtUtc : Instant.now();
         this.userId = userId;
         this.validated = true;
+
+        addDomainEvent(new ScoreSubmittedDomainEvent(
+                this.scoreEntryId,
+                this.sessionId,
+                this.machineId,
+                this.ipId,
+                this.modeId,
+                this.slotNumber,
+                this.userId != null ? this.userId.toString() : null,
+                this.score,
+                this.achievedAtUtc
+        ));
     }
 
 

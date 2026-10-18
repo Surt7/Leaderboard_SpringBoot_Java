@@ -1,8 +1,7 @@
 package com.worldpinball.leaderboard.infrastructure.seed;
 
+import com.worldpinball.leaderboard.application.services.RealtimeLeaderboardService;
 import com.worldpinball.leaderboard.domain.entities.*;
-import com.worldpinball.leaderboard.domain.enums.DeviceStatus;
-import com.worldpinball.leaderboard.domain.enums.MachineStatus;
 import com.worldpinball.leaderboard.infrastructure.*;
 import net.datafaker.Faker;
 import org.slf4j.Logger;
@@ -38,6 +37,7 @@ public class DevelopmentDataSeeder implements ApplicationRunner {
     private final UserProfileRepository userProfileRepository;
     private final GameSessionRepository gameSessionRepository;
     private final ScoreEntryRepository scoreEntryRepository;
+    private final RealtimeLeaderboardService realtimeLeaderboardService;
 
     public DevelopmentDataSeeder(
             PublisherRepository publisherRepository,
@@ -48,7 +48,8 @@ public class DevelopmentDataSeeder implements ApplicationRunner {
             MachineDeviceRepository machineDeviceRepository,
             UserProfileRepository userProfileRepository,
             GameSessionRepository gameSessionRepository,
-            ScoreEntryRepository scoreEntryRepository
+            ScoreEntryRepository scoreEntryRepository,
+            RealtimeLeaderboardService realtimeLeaderboardService
     ) {
         this.publisherRepository = publisherRepository;
         this.gameModeRepository = gameModeRepository;
@@ -59,6 +60,7 @@ public class DevelopmentDataSeeder implements ApplicationRunner {
         this.userProfileRepository = userProfileRepository;
         this.gameSessionRepository = gameSessionRepository;
         this.scoreEntryRepository = scoreEntryRepository;
+        this.realtimeLeaderboardService = realtimeLeaderboardService;
     }
 
     @Override
@@ -206,7 +208,16 @@ public class DevelopmentDataSeeder implements ApplicationRunner {
             ));
         }
         gameSessionRepository.saveAll(sessions);
-        scoreEntryRepository.saveAll(scores);
+        List<ScoreEntry> savedScores = scoreEntryRepository.saveAll(scores);
+
+        // Warm up Redis ZSET Leaderboard with seeded scores
+        for (ScoreEntry s : savedScores) {
+            try {
+                realtimeLeaderboardService.addScore(s.getIpId(), s.getModeId(), s.getScoreEntryId(), s.getScore());
+            } catch (Exception ex) {
+                log.warn("Could not warm up Redis ZSET for seeded score {}: {}", s.getScoreEntryId(), ex.getMessage());
+            }
+        }
 
         log.info("Development database seeding completed successfully (15 machines, 12 players, 30 scores).");
     }

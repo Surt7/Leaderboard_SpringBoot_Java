@@ -10,6 +10,11 @@ import java.util.UUID;
 
 @Repository
 public interface IpLicenseRepository extends JpaRepository<IpLicense, UUID> {
-    Optional<IpLicense> findBySlugIgnoreCaseAndActiveTrue(String slug);
+    Optional<IpLicense> findFirstBySlugIgnoreCaseAndActiveTrue(String slug);
+
+    default Optional<IpLicense> findBySlugIgnoreCaseAndActiveTrue(String slug) {
+        return findFirstBySlugIgnoreCaseAndActiveTrue(slug);
+    }
+
     List<IpLicense> findAllByActiveTrueOrderByNameAsc();
 }
