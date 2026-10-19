@@ -142,10 +142,15 @@ class AdminGovernanceIntegrationTest {
         String plainEnrollmentToken = provisionJson.get("enrollmentToken").asText();
 
         // 2. Enroll physical device using the enrollment token (Public)
+        java.security.KeyPairGenerator kpg = java.security.KeyPairGenerator.getInstance("EC");
+        kpg.initialize(new java.security.spec.ECGenParameterSpec("secp256r1"));
+        String validEcdsaPem = "-----BEGIN PUBLIC KEY-----\n"
+                + java.util.Base64.getEncoder().encodeToString(kpg.generateKeyPair().getPublic().getEncoded())
+                + "\n-----END PUBLIC KEY-----";
         EnrollDeviceRequest enrollReq = new EnrollDeviceRequest(
                 machineId,
                 plainEnrollmentToken,
-                "-----BEGIN PUBLIC KEY-----\nMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA\n-----END PUBLIC KEY-----",
+                validEcdsaPem,
                 "DEV-SN-" + suffix
         );
 
