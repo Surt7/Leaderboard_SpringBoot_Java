@@ -69,6 +69,10 @@ public class IpLicense {
         this.createdAtUtc = createdAtUtc != null ? createdAtUtc : Instant.now();
     }
 
+    public IpLicense(String name, String slug, boolean active, UUID ipId) {
+        this(name, slug, null, active, Instant.now(), ipId);
+    }
+
     public void activate(Instant now) {
         if (now == null) {
             throw new IllegalArgumentException(ErrorMessages.INVALID_DATE);
