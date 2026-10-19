@@ -94,6 +94,26 @@ public class Device {
         this.lastCounter = 0;
     }
 
+    public static Device enroll(
+        String serialPhysical,
+        String publicKeyPem,
+        Instant enrolledAtUtc
+    ) {
+        return enroll(serialPhysical, publicKeyPem, enrolledAtUtc, null, UUID.randomUUID());
+    }
+
+    public static Device enroll(
+        String serialPhysical,
+        String publicKeyPem,
+        Instant enrolledAtUtc,
+        String keyAlgorithm,
+        UUID deviceId
+    ) {
+        Device device = new Device(serialPhysical, enrolledAtUtc, deviceId, null, null);
+        device.activate(publicKeyPem, keyAlgorithm, enrolledAtUtc);
+        return device;
+    }
+
     public static Device createActive(
         String serialPhysical,
         String publicKey,

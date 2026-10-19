@@ -191,11 +191,7 @@ public class CertificateAuthorityService {
         try {
             return KeyFactory.getInstance("EC").generatePublic(keySpec);
         } catch (GeneralSecurityException ecEx) {
-            try {
-                return KeyFactory.getInstance("RSA").generatePublic(keySpec);
-            } catch (GeneralSecurityException rsaEx) {
-                throw new IllegalArgumentException("Unsupported or malformed SubjectPublicKeyInfo PEM", ecEx);
-            }
+            throw new IllegalArgumentException("Unsupported or malformed ECDSA SubjectPublicKeyInfo PEM", ecEx);
         }
     }
 

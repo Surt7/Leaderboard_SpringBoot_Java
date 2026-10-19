@@ -70,12 +70,10 @@ public class EnrollDeviceHandlerImpl implements EnrollDeviceHandler {
             return new EnrollDeviceResult.DeviceAlreadyEnrolled(cmd.deviceSerialNumber());
         }
 
-        Device device = Device.createActive(
+        Device device = Device.enroll(
                 cmd.deviceSerialNumber(),
                 cmd.publicKeyPem(),
-                "RSA-2048",
-                now,
-                UUID.randomUUID()
+                now
         );
 
         MachineDevice machineDevice = new MachineDevice(
