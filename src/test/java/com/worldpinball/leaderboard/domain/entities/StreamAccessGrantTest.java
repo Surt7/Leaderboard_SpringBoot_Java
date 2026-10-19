@@ -1,6 +1,5 @@
-package com.worldpinball.leaderboard.unit;
+package com.worldpinball.leaderboard.domain.entities;
 
-import com.worldpinball.leaderboard.domain.entities.StreamAccessGrant;
 import com.worldpinball.leaderboard.domain.enums.GrantOrigin;
 import com.worldpinball.leaderboard.domain.enums.GrantStatus;
 import com.worldpinball.leaderboard.domain.enums.PrincipalType;
@@ -18,7 +17,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @DisplayName("StreamAccessGrant Domain Entity Unit Tests")
-class StreamAccessGrantUnitTest {
+class StreamAccessGrantTest {
 
     @Test
     void constructor_whenArgumentsValid_shouldInitializeActiveGrant() {

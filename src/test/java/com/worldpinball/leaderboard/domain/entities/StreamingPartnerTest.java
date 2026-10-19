@@ -1,7 +1,5 @@
-package com.worldpinball.leaderboard.unit;
+package com.worldpinball.leaderboard.domain.entities;
 
-import com.worldpinball.leaderboard.domain.entities.StreamingAccessRequest;
-import com.worldpinball.leaderboard.domain.entities.StreamingPartner;
 import com.worldpinball.leaderboard.domain.enums.StreamingRequestStatus;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -14,7 +12,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @DisplayName("StreamingPartner and StreamingAccessRequest Domain Entity Unit Tests")
-class StreamingPartnerUnitTest {
+class StreamingPartnerTest {
 
     @Test
     void constructor_whenArgumentsAreValid_shouldInitializeActivePartner() {

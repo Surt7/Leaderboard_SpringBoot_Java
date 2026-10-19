@@ -20,6 +20,7 @@ public class OperatorScopeAuthorizationHandler {
 
         List<String> scopes = user.findAll("scope");
         return scopes.stream()
+                .flatMap(s -> java.util.Arrays.stream(s.split("\\s+")))
                 .anyMatch(s -> "*".equals(s) || s.equalsIgnoreCase(requiredScope));
     }
 }

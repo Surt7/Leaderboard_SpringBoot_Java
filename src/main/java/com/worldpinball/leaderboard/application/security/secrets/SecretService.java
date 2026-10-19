@@ -85,8 +85,8 @@ public class SecretService {
     }
 
     public String protect(String plainText) {
-        if (plainText == null) {
-            throw new IllegalArgumentException("plainText cannot be null");
+        if (plainText == null || plainText.isBlank()) {
+            throw new IllegalArgumentException("plainText cannot be null or blank");
         }
         try {
             byte[] iv = new byte[GCM_IV_LENGTH_BYTES];
@@ -125,7 +125,7 @@ public class SecretService {
             byte[] plainBytes = cipher.doFinal(payload, GCM_IV_LENGTH_BYTES, payload.length - GCM_IV_LENGTH_BYTES);
             return new String(plainBytes, StandardCharsets.UTF_8);
         } catch (GeneralSecurityException e) {
-            throw new IllegalArgumentException("AES-256-GCM decryption or authentication tag verification failed", e);
+            throw new SecurityException("AES-256-GCM decryption or authentication tag verification failed", e);
         }
     }
 

@@ -1,6 +1,5 @@
-package com.worldpinball.leaderboard.unit;
+package com.worldpinball.leaderboard.domain.entities;
 
-import com.worldpinball.leaderboard.domain.entities.Device;
 import com.worldpinball.leaderboard.domain.enums.DeviceStatus;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -15,7 +14,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @DisplayName("Device Domain Entity Unit Tests")
-class DeviceUnitTest {
+class DeviceTest {
 
     private static final Instant NOW_UTC = Instant.parse("2026-09-24T12:00:00Z");
     private static final String VALID_SERIAL = "DEV-PHYS-001";
@@ -128,7 +127,7 @@ class DeviceUnitTest {
 
     @Test
     void verifyAndIncrementCounter_whenDeviceIsNotActive_shouldThrowIllegalStateException() {
-        Device device = new Device(VALID_SERIAL, NOW_UTC, null, null, null); // Status is Pending
+        Device device = new Device(VALID_SERIAL, NOW_UTC, null, null, null);
 
         assertThatThrownBy(() -> device.verifyAndIncrementCounter(1))
                 .isInstanceOf(IllegalStateException.class)

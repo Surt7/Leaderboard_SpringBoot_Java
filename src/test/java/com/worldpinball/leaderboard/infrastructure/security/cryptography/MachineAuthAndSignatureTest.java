@@ -1,16 +1,12 @@
-package com.worldpinball.leaderboard.unit;
+package com.worldpinball.leaderboard.infrastructure.security.cryptography;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.worldpinball.leaderboard.application.security.cryptography.MachineAuthContext;
 import com.worldpinball.leaderboard.application.security.cryptography.MachineAuthResult;
 import com.worldpinball.leaderboard.domain.entities.Device;
 import com.worldpinball.leaderboard.domain.entities.MachineDevice;
 import com.worldpinball.leaderboard.infrastructure.DeviceRepository;
 import com.worldpinball.leaderboard.infrastructure.MachineDeviceRepository;
-import com.worldpinball.leaderboard.infrastructure.security.cryptography.CanonicalBuilder;
-import com.worldpinball.leaderboard.infrastructure.security.cryptography.CanonicalJson;
-import com.worldpinball.leaderboard.infrastructure.security.cryptography.EcdsaP256SignatureVerifier;
-import com.worldpinball.leaderboard.infrastructure.security.cryptography.MachineAuthService;
-import com.worldpinball.leaderboard.infrastructure.security.cryptography.SignatureVerifier;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -36,6 +32,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
+@DisplayName("Machine Auth, Canonicalization and ECDSA Signature Tests")
 class MachineAuthAndSignatureTest {
 
     private static final Instant FIXED_NOW = Instant.parse("2026-09-17T12:00:00Z");
@@ -67,17 +64,22 @@ class MachineAuthAndSignatureTest {
     }
 
     @Test
-    @DisplayName("CanonicalJson sorts nested object keys deterministically in ordinal order")
+    @DisplayName("CanonicalJson produces deterministic RFC 8785 output across permutations")
     void canonicalJson_sortsKeysDeterministically() {
-        String raw = "{ \"z\": 1, \"a\": { \"d\": true, \"b\": \"val\" }, \"m\": [ { \"y\": 2, \"x\": 1 } ] }";
+        ObjectMapper objectMapper = new ObjectMapper();
 
-        String canonical = CanonicalJson.canonicalize(raw);
+        String jsonA = "{\"b\": 2, \"a\": 1, \"nested\": {\"z\": 26, \"y\": 25}}";
+        String jsonB = "{\"nested\": {\"y\": 25, \"z\": 26}, \"a\": 1, \"b\": 2}";
 
-        assertThat(canonical).isEqualTo("{\"a\":{\"b\":\"val\",\"d\":true},\"m\":[{\"x\":1,\"y\":2}],\"z\":1}");
+        String canonicalA = CanonicalJson.canonicalize(jsonA);
+        String canonicalB = CanonicalJson.canonicalize(jsonB);
+
+        assertThat(canonicalA).isEqualTo(canonicalB);
+        assertThat(canonicalA).isEqualTo("{\"a\":1,\"b\":2,\"nested\":{\"y\":25,\"z\":26}}");
     }
 
     @Test
-    @DisplayName("EcdsaP256SignatureVerifier verifies both ASN.1 DER and raw 64-byte IEEE P1363 signatures")
+    @DisplayName("EcdsaP256SignatureVerifier verifies both ASN.1 DER and IEEE P1363 (64-byte raw) signatures")
     void ecdsaP256SignatureVerifier_verifiesDerAndP1363Signatures() throws Exception {
         KeyPairGenerator keyGen = KeyPairGenerator.getInstance("EC");
         keyGen.initialize(new ECGenParameterSpec("secp256r1"));

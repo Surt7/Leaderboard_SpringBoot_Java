@@ -1,8 +1,5 @@
-package com.worldpinball.leaderboard.unit;
+package com.worldpinball.leaderboard.domain.entities;
 
-import com.worldpinball.leaderboard.domain.entities.GameMode;
-import com.worldpinball.leaderboard.domain.entities.Publisher;
-import com.worldpinball.leaderboard.domain.entities.Region;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -17,7 +14,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @DisplayName("Reference Entities Unit Tests (GameMode, Publisher, Region)")
-class ReferenceEntitiesUnitTest {
+class ReferenceEntitiesTest {
 
     @Nested
     @DisplayName("GameMode Tests")

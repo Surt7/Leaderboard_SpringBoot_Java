@@ -1,6 +1,5 @@
-package com.worldpinball.leaderboard.unit;
+package com.worldpinball.leaderboard.domain.entities;
 
-import com.worldpinball.leaderboard.domain.entities.EnrollmentToken;
 import com.worldpinball.leaderboard.domain.enums.EnrollmentTokenType;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -16,7 +15,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @DisplayName("EnrollmentToken Domain Entity Unit Tests")
-class EnrollmentTokenUnitTest {
+class EnrollmentTokenTest {
 
     private static final Instant NOW_UTC = Instant.parse("2026-09-10T12:00:00Z");
 

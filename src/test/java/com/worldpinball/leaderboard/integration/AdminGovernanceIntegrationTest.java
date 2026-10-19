@@ -1,4 +1,4 @@
-package com.worldpinball.leaderboard;
+package com.worldpinball.leaderboard.integration;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;

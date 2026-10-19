@@ -1,6 +1,5 @@
-package com.worldpinball.leaderboard.unit;
+package com.worldpinball.leaderboard.domain.entities;
 
-import com.worldpinball.leaderboard.domain.entities.StreamSubscription;
 import com.worldpinball.leaderboard.domain.enums.PrincipalType;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -12,7 +11,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @DisplayName("StreamSubscription Domain Entity Unit Tests")
-class StreamSubscriptionUnitTest {
+class StreamSubscriptionTest {
 
     @Test
     void constructor_whenArgumentsValid_shouldInitializeSubscription() {

@@ -22,10 +22,31 @@ public class ClaimsPrincipal {
     private final List<Claim> claims = new ArrayList<>();
 
     public ClaimsPrincipal(String authenticationScheme, List<Claim> initialClaims) {
+        this(authenticationScheme, initialClaims, Collections.emptyList());
+    }
+
+    public ClaimsPrincipal(String authenticationScheme, List<Claim> initialClaims, List<String> roles) {
         this.authenticationScheme = authenticationScheme != null ? authenticationScheme : "Default";
         if (initialClaims != null) {
             this.claims.addAll(initialClaims);
         }
+        if (roles != null) {
+            for (String role : roles) {
+                this.claims.add(new Claim(CLAIM_ROLE, role));
+            }
+        }
+    }
+
+    public boolean hasScope(String scope) {
+        if (scope == null) return false;
+        return claims.stream()
+                .filter(c -> c.type().equalsIgnoreCase("scope"))
+                .anyMatch(c -> {
+                    for (String part : c.value().split("[\\s,]+")) {
+                        if (part.equalsIgnoreCase(scope) || "*".equals(part)) return true;
+                    }
+                    return false;
+                });
     }
 
     public String getAuthenticationScheme() {
