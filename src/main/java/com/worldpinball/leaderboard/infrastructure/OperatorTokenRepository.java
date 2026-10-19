@@ -9,5 +9,6 @@ import java.util.UUID;
 
 @Repository
 public interface OperatorTokenRepository extends JpaRepository<OperatorToken, UUID> {
+    Optional<OperatorToken> findByTokenHash(String tokenHash);
     Optional<OperatorToken> findByTokenHashAndActiveTrue(String tokenHash);
 }
