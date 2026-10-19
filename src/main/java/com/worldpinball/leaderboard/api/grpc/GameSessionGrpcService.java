@@ -237,19 +237,24 @@ public class GameSessionGrpcService extends GameSessionServiceGrpc.GameSessionSe
                 return;
             }
             GetLobbyResult update = getLobbyHandler.handle(new GetLobbyQuery(sid));
-            if (update instanceof GetLobbyResult.Success success) {
-                synchronized (responseObserver) {
-                    if (!completed.get()) {
-                        responseObserver.onNext(mapToLobbyResponse(success.lobby()));
-                        if (isTerminal(success.lobby().sessionState())) {
-                            completed.set(true);
-                            Runnable r = unsubscribeRef.get();
-                            if (r != null) {
-                                r.run();
+            switch (update) {
+                case GetLobbyResult.Success(SessionLobbyDto lobby) -> {
+                    synchronized (responseObserver) {
+                        if (!completed.get()) {
+                            responseObserver.onNext(mapToLobbyResponse(lobby));
+                            if (isTerminal(lobby.sessionState())) {
+                                completed.set(true);
+                                Runnable r = unsubscribeRef.get();
+                                if (r != null) {
+                                    r.run();
+                                }
+                                responseObserver.onCompleted();
                             }
-                            responseObserver.onCompleted();
                         }
                     }
+                }
+                case GetLobbyResult.SessionNotFound ignored -> {
+                    // Session no longer found during notification cycle: nothing to push
                 }
             }
         });
