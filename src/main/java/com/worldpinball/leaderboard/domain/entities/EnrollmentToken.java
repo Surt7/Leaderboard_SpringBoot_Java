@@ -86,6 +86,17 @@ public class EnrollmentToken {
             String issuedByUserId,
             Instant issuedAt,
             Instant expiresAt,
+            UUID machineId
+    ) {
+        this(tokenHash, tokenType, issuedByUserId, issuedAt, expiresAt, machineId, null, 1, null, DEFAULT_VALIDITY_HOURS);
+    }
+
+    public EnrollmentToken(
+            String tokenHash,
+            EnrollmentTokenType tokenType,
+            String issuedByUserId,
+            Instant issuedAt,
+            Instant expiresAt,
             UUID machineId,
             UUID deviceId,
             int maxUses,
