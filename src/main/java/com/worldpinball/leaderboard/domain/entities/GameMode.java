@@ -66,6 +66,10 @@ public class GameMode {
         this.createdAtUtc = createdAtUtc != null ? createdAtUtc : Instant.now();
     }
 
+    public GameMode(String code, String name, String description, boolean active, UUID modeId) {
+        this(code, name, description, active, Instant.now(), modeId);
+    }
+
     public void updateDetails(String name, String description, Instant now) {
         if (name == null || name.isBlank()) {
             throw new IllegalArgumentException(ErrorMessages.INVALID_NAME);

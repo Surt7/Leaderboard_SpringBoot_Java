@@ -51,6 +51,13 @@ public class Publisher {
         this.createdAtUtc = createdAtUtc != null ? createdAtUtc : Instant.now();
     }
 
+    public Publisher(String name, String slug, Instant createdAtUtc, UUID publisherId) {
+        this(name, slug, createdAtUtc);
+        if (publisherId != null) {
+            this.publisherId = publisherId;
+        }
+    }
+
     public void update(String name, String slug, Instant now) {
         if (name == null || name.isBlank()) {
             throw new IllegalArgumentException(ErrorMessages.INVALID_NAME);
