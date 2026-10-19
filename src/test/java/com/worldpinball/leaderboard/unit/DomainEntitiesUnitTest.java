@@ -80,6 +80,22 @@ class DomainEntitiesUnitTest {
         }
 
         @Test
+        void constructor_whenIdempotencyKeyIsNull_throwsIllegalArgumentException() {
+            assertThatThrownBy(() -> new Machine(
+                    UUID.randomUUID(), "WP-1", "Godzilla", REGISTERED_AT, null, "nonce", null
+            )).isInstanceOf(IllegalArgumentException.class)
+              .hasMessage(Machine.ErrorMessages.EMPTY_IDEMPOTENCY_KEY);
+        }
+
+        @Test
+        void constructor_whenNonceIsBlank_throwsIllegalArgumentException() {
+            assertThatThrownBy(() -> new Machine(
+                    UUID.randomUUID(), "WP-1", "Godzilla", REGISTERED_AT, UUID.randomUUID(), "   ", null
+            )).isInstanceOf(IllegalArgumentException.class)
+              .hasMessage(Machine.ErrorMessages.EMPTY_NONCE);
+        }
+
+        @Test
         void activate_whenPendingEnrollment_throwsIllegalStateException() {
             Machine machine = new Machine(
                     UUID.randomUUID(), "WP-1", "Godzilla", REGISTERED_AT, UUID.randomUUID(), "nonce", null
