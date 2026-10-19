@@ -91,29 +91,29 @@ public class GameSessionGrpcService extends GameSessionServiceGrpc.GameSessionSe
         var command = new AddPlayerCommand(sessionId, request.getSlotNumber(), userId, initials, false);
         AddPlayerResult result = addPlayerHandler.handle(command);
 
-        if (result instanceof AddPlayerResult.Success s) {
-            lobbyNotifier.notifyLobbyUpdated(sessionId);
-            log.info("Added player to slot {} for session {}.", command.slotNumber(), command.sessionId());
-            responseObserver.onNext(AddPlayerResponse.newBuilder()
-                .setSuccess(true)
-                .setSlotNumber(s.slotNumber())
-                .setMessage("Player added.")
-                .build());
-            responseObserver.onCompleted();
-        } else if (result instanceof AddPlayerResult.SessionNotFound) {
-            responseObserver.onError(Status.NOT_FOUND.withDescription("Session not found.").asRuntimeException());
-        } else if (result instanceof AddPlayerResult.SessionNotJoinable) {
-            responseObserver.onError(Status.FAILED_PRECONDITION.withDescription("Session is not joinable.").asRuntimeException());
-        } else if (result instanceof AddPlayerResult.SlotAlreadyOccupied) {
-            responseObserver.onError(Status.ALREADY_EXISTS.withDescription("Slot is already occupied.").asRuntimeException());
-        } else if (result instanceof AddPlayerResult.InvalidSlot) {
-            responseObserver.onError(Status.INVALID_ARGUMENT.withDescription("Slot number must be between 1 and 4.").asRuntimeException());
-        } else if (result instanceof AddPlayerResult.RegisteredUserRequired) {
-            responseObserver.onError(Status.PERMISSION_DENIED.withDescription("Registered user required.").asRuntimeException());
-        } else if (result instanceof AddPlayerResult.UserAlreadyRegistered) {
-            responseObserver.onError(Status.ALREADY_EXISTS.withDescription("User already registered.").asRuntimeException());
-        } else {
-            responseObserver.onError(Status.INTERNAL.withDescription("Unexpected error.").asRuntimeException());
+        switch (result) {
+            case AddPlayerResult.Success(UUID sid, int slotNumber) -> {
+                lobbyNotifier.notifyLobbyUpdated(sessionId);
+                log.info("Added player to slot {} for session {}.", command.slotNumber(), command.sessionId());
+                responseObserver.onNext(AddPlayerResponse.newBuilder()
+                    .setSuccess(true)
+                    .setSlotNumber(slotNumber)
+                    .setMessage("Player added.")
+                    .build());
+                responseObserver.onCompleted();
+            }
+            case AddPlayerResult.SessionNotFound(UUID sid) ->
+                responseObserver.onError(Status.NOT_FOUND.withDescription("Session not found.").asRuntimeException());
+            case AddPlayerResult.SessionNotJoinable(UUID sid) ->
+                responseObserver.onError(Status.FAILED_PRECONDITION.withDescription("Session is not joinable.").asRuntimeException());
+            case AddPlayerResult.SlotAlreadyOccupied(int slotNumber) ->
+                responseObserver.onError(Status.ALREADY_EXISTS.withDescription("Slot is already occupied.").asRuntimeException());
+            case AddPlayerResult.InvalidSlot(int slotNumber) ->
+                responseObserver.onError(Status.INVALID_ARGUMENT.withDescription("Slot number must be between 1 and 4.").asRuntimeException());
+            case AddPlayerResult.RegisteredUserRequired(UUID sid) ->
+                responseObserver.onError(Status.PERMISSION_DENIED.withDescription("Registered user required.").asRuntimeException());
+            case AddPlayerResult.UserAlreadyRegistered(UUID uid) ->
+                responseObserver.onError(Status.ALREADY_EXISTS.withDescription("User already registered.").asRuntimeException());
         }
     }
 
@@ -130,24 +130,24 @@ public class GameSessionGrpcService extends GameSessionServiceGrpc.GameSessionSe
         var command = new KickPlayerCommand(sessionId, request.getSlotNumber());
         KickPlayerResult result = kickPlayerHandler.handle(command);
 
-        if (result instanceof KickPlayerResult.Success s) {
-            lobbyNotifier.notifyLobbyUpdated(sessionId);
-            responseObserver.onNext(KickPlayerResponse.newBuilder()
-                .setSuccess(true)
-                .setSlotNumber(s.slotNumber())
-                .setMessage("Player kicked.")
-                .build());
-            responseObserver.onCompleted();
-        } else if (result instanceof KickPlayerResult.SessionNotFound) {
-            responseObserver.onError(Status.NOT_FOUND.withDescription("Session not found.").asRuntimeException());
-        } else if (result instanceof KickPlayerResult.CannotRemovePlayerActiveSession) {
-            responseObserver.onError(Status.FAILED_PRECONDITION.withDescription("Cannot remove player once session has started or ended.").asRuntimeException());
-        } else if (result instanceof KickPlayerResult.PlayerNotFound) {
-            responseObserver.onError(Status.NOT_FOUND.withDescription("Player not found in the specified slot.").asRuntimeException());
-        } else if (result instanceof KickPlayerResult.InvalidSlot) {
-            responseObserver.onError(Status.INVALID_ARGUMENT.withDescription("Slot number must be between 1 and 4.").asRuntimeException());
-        } else {
-            responseObserver.onError(Status.INTERNAL.withDescription("Unexpected error.").asRuntimeException());
+        switch (result) {
+            case KickPlayerResult.Success(UUID sid, int slotNumber) -> {
+                lobbyNotifier.notifyLobbyUpdated(sessionId);
+                responseObserver.onNext(KickPlayerResponse.newBuilder()
+                    .setSuccess(true)
+                    .setSlotNumber(slotNumber)
+                    .setMessage("Player kicked.")
+                    .build());
+                responseObserver.onCompleted();
+            }
+            case KickPlayerResult.SessionNotFound(UUID sid) ->
+                responseObserver.onError(Status.NOT_FOUND.withDescription("Session not found.").asRuntimeException());
+            case KickPlayerResult.CannotRemovePlayerActiveSession(UUID sid) ->
+                responseObserver.onError(Status.FAILED_PRECONDITION.withDescription("Cannot remove player once session has started or ended.").asRuntimeException());
+            case KickPlayerResult.PlayerNotFound(int slotNumber) ->
+                responseObserver.onError(Status.NOT_FOUND.withDescription("Player not found in the specified slot.").asRuntimeException());
+            case KickPlayerResult.InvalidSlot(int slotNumber) ->
+                responseObserver.onError(Status.INVALID_ARGUMENT.withDescription("Slot number must be between 1 and 4.").asRuntimeException());
         }
     }
 
@@ -164,20 +164,20 @@ public class GameSessionGrpcService extends GameSessionServiceGrpc.GameSessionSe
         var command = new LaunchSessionCommand(sessionId);
         LaunchSessionResult result = launchSessionHandler.handle(command);
 
-        if (result instanceof LaunchSessionResult.Success(UUID id)) {
-            lobbyNotifier.notifyLobbyUpdated(sessionId);
-            responseObserver.onNext(LaunchSessionResponse.newBuilder()
-                .setSuccess(true)
-                .setSessionId(id.toString())
-                .setMessage("Session launched.")
-                .build());
-            responseObserver.onCompleted();
-        } else if (result instanceof LaunchSessionResult.SessionNotFound) {
-            responseObserver.onError(Status.NOT_FOUND.withDescription("Session not found.").asRuntimeException());
-        } else if (result instanceof LaunchSessionResult.CannotStartSession(String message)) {
-            responseObserver.onError(Status.FAILED_PRECONDITION.withDescription(message).asRuntimeException());
-        } else {
-            responseObserver.onError(Status.INTERNAL.withDescription("Unexpected error.").asRuntimeException());
+        switch (result) {
+            case LaunchSessionResult.Success(UUID id) -> {
+                lobbyNotifier.notifyLobbyUpdated(sessionId);
+                responseObserver.onNext(LaunchSessionResponse.newBuilder()
+                        .setSuccess(true)
+                        .setSessionId(id.toString())
+                        .setMessage("Session launched.")
+                        .build());
+                responseObserver.onCompleted();
+            }
+            case LaunchSessionResult.SessionNotFound(UUID sid) ->
+                    responseObserver.onError(Status.NOT_FOUND.withDescription("Session not found.").asRuntimeException());
+            case LaunchSessionResult.CannotStartSession(String message) ->
+                    responseObserver.onError(Status.FAILED_PRECONDITION.withDescription(message).asRuntimeException());
         }
     }
 
@@ -194,13 +194,13 @@ public class GameSessionGrpcService extends GameSessionServiceGrpc.GameSessionSe
         var query = new GetLobbyQuery(sessionId);
         GetLobbyResult result = getLobbyHandler.handle(query);
 
-        if (result instanceof GetLobbyResult.Success s) {
-            responseObserver.onNext(mapToLobbyResponse(s.lobby()));
-            responseObserver.onCompleted();
-        } else if (result instanceof GetLobbyResult.SessionNotFound) {
-            responseObserver.onError(Status.NOT_FOUND.withDescription("Session not found.").asRuntimeException());
-        } else {
-            responseObserver.onError(Status.INTERNAL.withDescription("Unexpected error.").asRuntimeException());
+        switch (result) {
+            case GetLobbyResult.Success(SessionLobbyDto lobby) -> {
+                responseObserver.onNext(mapToLobbyResponse(lobby));
+                responseObserver.onCompleted();
+            }
+            case GetLobbyResult.SessionNotFound(UUID sid) ->
+                responseObserver.onError(Status.NOT_FOUND.withDescription("Session not found.").asRuntimeException());
         }
     }
 
@@ -326,25 +326,25 @@ public class GameSessionGrpcService extends GameSessionServiceGrpc.GameSessionSe
 
         RecordBallScoreResult result = recordBallScoreHandler.handle(command);
 
-        if (result instanceof RecordBallScoreResult.Success s) {
-            lobbyNotifier.notifyLobbyUpdated(sessionId);
-            responseObserver.onNext(RecordBallScoreResponse.newBuilder()
-                .setSuccess(true)
-                .setSessionId(s.sessionId().toString())
-                .setSlotNumber(s.slotNumber())
-                .setBallNumber(s.ballNumber())
-                .setScore(s.score())
-                .setMessage("Ball score recorded.")
-                .build());
-            responseObserver.onCompleted();
-        } else if (result instanceof RecordBallScoreResult.SessionNotFound) {
-            responseObserver.onError(Status.NOT_FOUND.withDescription("Session not found.").asRuntimeException());
-        } else if (result instanceof RecordBallScoreResult.DeviceMismatch) {
-            responseObserver.onError(Status.PERMISSION_DENIED.withDescription("Device mismatch.").asRuntimeException());
-        } else if (result instanceof RecordBallScoreResult.CannotRecordBallScore c) {
-            responseObserver.onError(Status.FAILED_PRECONDITION.withDescription(c.reason()).asRuntimeException());
-        } else {
-            responseObserver.onError(Status.INTERNAL.withDescription("Unexpected error.").asRuntimeException());
+        switch (result) {
+            case RecordBallScoreResult.Success(UUID sid, int slotNumber, int ballNumber, long score) -> {
+                lobbyNotifier.notifyLobbyUpdated(sessionId);
+                responseObserver.onNext(RecordBallScoreResponse.newBuilder()
+                    .setSuccess(true)
+                    .setSessionId(sid.toString())
+                    .setSlotNumber(slotNumber)
+                    .setBallNumber(ballNumber)
+                    .setScore(score)
+                    .setMessage("Ball score recorded.")
+                    .build());
+                responseObserver.onCompleted();
+            }
+            case RecordBallScoreResult.SessionNotFound(UUID sid) ->
+                responseObserver.onError(Status.NOT_FOUND.withDescription("Session not found.").asRuntimeException());
+            case RecordBallScoreResult.DeviceMismatch(UUID expected, UUID actual) ->
+                responseObserver.onError(Status.PERMISSION_DENIED.withDescription("Device mismatch.").asRuntimeException());
+            case RecordBallScoreResult.CannotRecordBallScore(String reason) ->
+                responseObserver.onError(Status.FAILED_PRECONDITION.withDescription(reason).asRuntimeException());
         }
     }
 
