@@ -64,7 +64,10 @@ public class LeaderboardController {
             case SubmitScoreResult.SlotAlreadyOccupied o -> ResponseEntity.status(HttpStatus.CONFLICT).body(o);
             case SubmitScoreResult.SessionNotFound nf -> ResponseEntity.status(HttpStatus.NOT_FOUND).body(nf);
             case SubmitScoreResult.SessionAlreadyEnded ae -> ResponseEntity.status(HttpStatus.CONFLICT).body(ae);
+            case SubmitScoreResult.SessionNotStarted ns -> ResponseEntity.status(HttpStatus.CONFLICT).body(ns);
+            case SubmitScoreResult.SlotNotFound snf -> ResponseEntity.status(HttpStatus.CONFLICT).body(snf);
             case SubmitScoreResult.DeviceMismatch dm -> ResponseEntity.status(HttpStatus.FORBIDDEN).body(dm);
+            case SubmitScoreResult.EmptyScores es -> ResponseEntity.badRequest().body(es);
         };
     }
 

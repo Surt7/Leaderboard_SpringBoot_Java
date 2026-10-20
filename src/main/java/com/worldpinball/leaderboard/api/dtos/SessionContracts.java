@@ -55,4 +55,18 @@ public final class SessionContracts {
         int ballNumber,
         long score
     ) {}
+
+    public record SlotScoreRequest(
+        int slotNumber,
+        long score
+    ) {}
+
+    public record SubmitScoreRequest(
+        UUID deviceId,
+        java.util.List<SlotScoreRequest> scores
+    ) {}
+
+    public record SubmitScoreResponse(
+        java.util.List<UUID> scoreEntryIds
+    ) {}
 }

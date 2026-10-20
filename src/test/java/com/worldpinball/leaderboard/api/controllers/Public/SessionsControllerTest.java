@@ -23,6 +23,7 @@ import com.worldpinball.leaderboard.application.features.gamesessions.Public.lau
 import com.worldpinball.leaderboard.application.features.gamesessions.Public.recordballscore.RecordBallScoreHandler;
 import com.worldpinball.leaderboard.application.features.gamesessions.Public.recordballscore.RecordBallScoreResult;
 import com.worldpinball.leaderboard.application.features.gamesessions.Public.recordballscore.commands.RecordBallScoreCommand;
+import com.worldpinball.leaderboard.application.features.gamesessions.Public.submitscore.SubmitScoreHandler;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -65,6 +66,9 @@ class SessionsControllerTest {
     @Mock
     private RecordBallScoreHandler recordBallScoreHandler;
 
+    @Mock
+    private SubmitScoreHandler submitScoreHandler;
+
     private SessionsController sut;
 
     @BeforeEach
@@ -76,7 +80,8 @@ class SessionsControllerTest {
                 kickPlayerHandler,
                 launchSessionHandler,
                 abortSessionHandler,
-                recordBallScoreHandler
+                recordBallScoreHandler,
+                submitScoreHandler
         );
     }
 

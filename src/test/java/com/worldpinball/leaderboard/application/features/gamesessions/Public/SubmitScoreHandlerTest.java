@@ -5,7 +5,11 @@ import com.worldpinball.leaderboard.application.features.gamesessions.Public.sub
 import com.worldpinball.leaderboard.application.features.gamesessions.Public.submitscore.commands.SubmitScoreCommand;
 import com.worldpinball.leaderboard.application.services.LobbyNotificationService;
 import com.worldpinball.leaderboard.application.services.RealtimeLeaderboardService;
+import com.worldpinball.leaderboard.domain.entities.GameSession;
+import com.worldpinball.leaderboard.domain.entities.Machine;
 import com.worldpinball.leaderboard.domain.entities.ScoreEntry;
+import com.worldpinball.leaderboard.infrastructure.GameSessionRepository;
+import com.worldpinball.leaderboard.infrastructure.MachineRepository;
 import com.worldpinball.leaderboard.infrastructure.ScoreEntryRepository;
 import com.worldpinball.leaderboard.infrastructure.outbox.DomainEventOutboxRelay;
 import org.junit.jupiter.api.BeforeEach;
@@ -30,6 +34,12 @@ import static org.mockito.Mockito.*;
 class SubmitScoreHandlerTest {
 
     @Mock
+    private GameSessionRepository gameSessionRepository;
+
+    @Mock
+    private MachineRepository machineRepository;
+
+    @Mock
     private ScoreEntryRepository scoreEntryRepository;
 
     @Mock
@@ -48,6 +58,8 @@ class SubmitScoreHandlerTest {
     @BeforeEach
     void setUp() {
         sut = new SubmitScoreHandlerImpl(
+                gameSessionRepository,
+                machineRepository,
                 scoreEntryRepository,
                 domainEventOutboxRelay,
                 realtimeLeaderboardService,
@@ -60,13 +72,25 @@ class SubmitScoreHandlerTest {
     @DisplayName("Returns SlotAlreadyOccupied when score for slot already recorded")
     void handle_whenScoreAlreadyExistsForSlot_returnsSlotAlreadyOccupied() {
         UUID sessionId = UUID.randomUUID();
+        UUID deviceId = UUID.randomUUID();
+        UUID machineId = UUID.randomUUID();
+        UUID modeId = UUID.randomUUID();
+        UUID userId = UUID.randomUUID();
+
+        GameSession session = new GameSession(
+                machineId, deviceId, modeId, "1.0", "nonce-123", Instant.now(clock), sessionId
+        );
+        session.addPlayer(1, userId, "USR", false);
+        session.launch(Instant.now(clock));
+        when(gameSessionRepository.findByIdWithPlayers(sessionId)).thenReturn(Optional.of(session));
+
         ScoreEntry existing = new ScoreEntry(
-                sessionId, 1, UUID.randomUUID(), UUID.randomUUID(), UUID.randomUUID(), UUID.randomUUID(), 500_000L, Instant.now(clock), UUID.randomUUID()
+                sessionId, 1, deviceId, machineId, UUID.randomUUID(), modeId, 500_000L, Instant.now(clock), userId
         );
         when(scoreEntryRepository.findBySessionIdAndSlotNumber(sessionId, 1)).thenReturn(Optional.of(existing));
 
         SubmitScoreCommand command = new SubmitScoreCommand(
-                sessionId, 1, UUID.randomUUID(), UUID.randomUUID(), UUID.randomUUID(), UUID.randomUUID(), 750_000L, Instant.now(clock), UUID.randomUUID()
+                sessionId, 1, deviceId, machineId, UUID.randomUUID(), modeId, 750_000L, Instant.now(clock), userId
         );
         SubmitScoreResult result = sut.handle(command);
 
@@ -89,6 +113,13 @@ class SubmitScoreHandlerTest {
         UUID modeId = UUID.randomUUID();
         UUID userId = UUID.randomUUID();
 
+        GameSession session = new GameSession(
+                machineId, deviceId, modeId, "1.0", "nonce-123", Instant.now(clock), sessionId
+        );
+        session.addPlayer(1, userId, "USR", false);
+        session.launch(Instant.now(clock));
+        when(gameSessionRepository.findByIdWithPlayers(sessionId)).thenReturn(Optional.of(session));
+
         when(scoreEntryRepository.findBySessionIdAndSlotNumber(sessionId, 1)).thenReturn(Optional.empty());
         when(scoreEntryRepository.save(any(ScoreEntry.class))).thenAnswer(inv -> inv.getArgument(0));
 
@@ -103,8 +134,8 @@ class SubmitScoreHandlerTest {
 
         verify(scoreEntryRepository).save(any(ScoreEntry.class));
         verify(domainEventOutboxRelay).persistOutboxMessagesAndNotifyAfterCommit(any(ScoreEntry.class));
-        verify(realtimeLeaderboardService).addScore(eq(ipId), eq(modeId), any(UUID.class), eq(1_250_000L));
-        verify(realtimeLeaderboardService).invalidateCachedLeaderboard(ipId, modeId);
+        verify(realtimeLeaderboardService).addScore(any(UUID.class), eq(modeId), any(UUID.class), eq(1_250_000L));
+        verify(realtimeLeaderboardService).invalidateCachedLeaderboard(any(UUID.class), eq(modeId));
         verify(lobbyNotifier).notifyScoreSubmitted(eq(sessionId), eq(1), eq(1_250_000L));
     }
 }

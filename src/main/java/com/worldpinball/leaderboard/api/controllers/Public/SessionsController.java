@@ -22,6 +22,10 @@ import com.worldpinball.leaderboard.application.features.gamesessions.Public.lau
 import com.worldpinball.leaderboard.application.features.gamesessions.Public.recordballscore.RecordBallScoreHandler;
 import com.worldpinball.leaderboard.application.features.gamesessions.Public.recordballscore.RecordBallScoreResult;
 import com.worldpinball.leaderboard.application.features.gamesessions.Public.recordballscore.commands.RecordBallScoreCommand;
+import com.worldpinball.leaderboard.application.features.gamesessions.Public.submitscore.SlotScoreDto;
+import com.worldpinball.leaderboard.application.features.gamesessions.Public.submitscore.SubmitScoreHandler;
+import com.worldpinball.leaderboard.application.features.gamesessions.Public.submitscore.SubmitScoreResult;
+import com.worldpinball.leaderboard.application.features.gamesessions.Public.submitscore.commands.SubmitScoreCommand;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -42,6 +46,7 @@ public class SessionsController {
     private final LaunchSessionHandler launchSessionHandler;
     private final AbortSessionHandler abortSessionHandler;
     private final RecordBallScoreHandler recordBallScoreHandler;
+    private final SubmitScoreHandler submitScoreHandler;
 
     @PostMapping("/create")
     public ResponseEntity<?> createGameSession(
@@ -201,6 +206,46 @@ public class SessionsController {
                 .body(Map.of("message", "Device '" + d.actualDeviceId() + "' mismatch (expected '" + d.expectedDeviceId() + "')."));
             case RecordBallScoreResult.CannotRecordBallScore c -> ResponseEntity.status(HttpStatus.BAD_REQUEST)
                 .body(Map.of("message", c.reason()));
+        };
+    }
+
+    @PostMapping("/{sessionId}/submit-score")
+    public ResponseEntity<?> submitScore(
+        @PathVariable UUID sessionId,
+        @RequestBody SubmitScoreRequest request,
+        @RequestHeader(value = "X-Device-Id", required = false) UUID headerDeviceId
+    ) {
+        UUID effectiveDeviceId = request.deviceId() != null ? request.deviceId() : headerDeviceId;
+        if (effectiveDeviceId == null) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("message", "DeviceId must be provided."));
+        }
+        if (request.scores() == null || request.scores().isEmpty()) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("message", "Scores list cannot be empty."));
+        }
+
+        var slotScores = request.scores().stream()
+            .map(s -> new SlotScoreDto(s.slotNumber(), s.score()))
+            .toList();
+
+        var command = new SubmitScoreCommand(sessionId, effectiveDeviceId, slotScores);
+        SubmitScoreResult result = submitScoreHandler.handle(command);
+
+        return switch (result) {
+            case SubmitScoreResult.Success s -> ResponseEntity.ok(new SubmitScoreResponse(s.scoreEntryIds()));
+            case SubmitScoreResult.SessionNotFound s -> ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(Map.of("message", "Session '" + s.sessionId() + "' not found."));
+            case SubmitScoreResult.SessionAlreadyEnded s -> ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(Map.of("message", "Session '" + s.sessionId() + "' is already ended."));
+            case SubmitScoreResult.SessionNotStarted s -> ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(Map.of("message", "Session '" + s.sessionId() + "' is not started."));
+            case SubmitScoreResult.DeviceMismatch d -> ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(Map.of("message", "Device '" + d.actualDeviceId() + "' mismatch (expected '" + d.expectedDeviceId() + "')."));
+            case SubmitScoreResult.SlotNotFound s -> ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(Map.of("message", "Slot number '" + s.slotNumber() + "' not found."));
+            case SubmitScoreResult.SlotAlreadyOccupied s -> ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(Map.of("message", "Slot number '" + s.slotNumber() + "' is already occupied."));
+            case SubmitScoreResult.EmptyScores ignored -> ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(Map.of("message", "Scores list cannot be empty."));
         };
     }
 }
