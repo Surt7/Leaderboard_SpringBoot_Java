@@ -83,3 +83,15 @@ services:
           target: /app/classes
         - action: rebuild
           path: ../Leaderboard_Bff_Java/pom.xml
+
+  nginx:
+    profiles: ["nginx", "apps"]
+    image: nginx:1.27-alpine
+    container_name: worldpinball-java-dev-nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    volumes:
+      - ./docker/nginx/dev-nginx.conf:/etc/nginx/nginx.conf:ro
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
