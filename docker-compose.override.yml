@@ -1,0 +1,85 @@
+# ==============================================================================
+# Docker Compose Development Override
+# Usage:
+#   1. Regular dev (infra only in Docker, run apps in IDE to save RAM):
+#      docker compose up -d
+#
+#   2. Near-Prod testing (run API & BFF in containers):
+#      docker compose --profile apps up -d --build
+#
+#   3. Hot Watch mode (syncs compiled classes into running containers):
+#      docker compose --profile apps alpha watch
+# ==============================================================================
+
+services:
+  api:
+    profiles: ["apps"]
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: worldpinball-java-api
+    restart: unless-stopped
+    environment:
+      - PORT=7085
+      - GRPC_PORT=9090
+      - DB_HOST=db
+      - DB_PORT=5432
+      - DB_NAME=worldpinball
+      - DB_USER=postgres
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
+      - KAFKA_BOOTSTRAP_SERVERS=kafka:29092
+      - KAFKA_LISTENER_AUTO_STARTUP=false
+      - MANAGEMENT_HEALTH_SHOW_DETAILS=never
+    ports:
+      - "7085:7085"
+      - "9090:9090"
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      kafka:
+        condition: service_started
+    develop:
+      watch:
+        - action: sync
+          path: ./target/classes
+          target: /app/classes
+        - action: rebuild
+          path: ./pom.xml
+
+  bff:
+    profiles: ["apps"]
+    build:
+      context: ../Leaderboard_Bff_Java
+      dockerfile: Dockerfile
+    container_name: worldpinball-java-bff
+    restart: unless-stopped
+    environment:
+      - PORT=8085
+      - CORE_API_URL=http://api:7085
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
+      - OAUTH2_ISSUER_URI=http://keycloak:8080/realms/worldpinball
+      - GRPC_CLIENT_GAMESESSIONSERVICE_ADDRESS=static://api:9090
+      - GRPC_CLIENT_GAMESESSIONSERVICE_NEGOTIATION_TYPE=plaintext
+    ports:
+      - "8085:8085"
+    depends_on:
+      api:
+        condition: service_started
+      redis:
+        condition: service_healthy
+      keycloak:
+        condition: service_healthy
+    develop:
+      watch:
+        - action: sync
+          path: ../Leaderboard_Bff_Java/target/classes
+          target: /app/classes
+        - action: rebuild
+          path: ../Leaderboard_Bff_Java/pom.xml
