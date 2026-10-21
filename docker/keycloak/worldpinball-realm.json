@@ -40,13 +40,16 @@
         "http://localhost:8080/*",
         "https://localhost:7010/swagger/oauth2-redirect.html",
         "http://localhost:5085/swagger/oauth2-redirect.html",
-        "https://localhost:7285/*"
+        "https://localhost:7285/*",
+        "https://api.worldpinball.local/swagger-ui/oauth2-redirect.html",
+        "https://api.worldpinball.local/*"
       ],
       "webOrigins": [
         "http://localhost:8080",
         "https://localhost:7010",
         "http://localhost:4200",
-        "http://localhost:7285"
+        "https://localhost:7285",
+        "https://api.worldpinball.local"
       ],
       "attributes": {
         "pkce.code.challenge.method": "S256"
@@ -95,11 +98,19 @@
       "redirectUris": [
         "https://localhost:7285/signin-oidc",
         "https://localhost:7285/*",
-        "http://localhost:4200/*"
+        "http://localhost:4200/*",
+        "http://localhost:8085/login/oauth2/code/keycloak",
+        "https://bff.worldpinball.local/login/oauth2/code/keycloak",
+        "https://bff.worldpinball.local/signin-oidc",
+        "https://bff.worldpinball.local/*",
+        "https://worldpinball.local/*"
       ],
       "webOrigins": [
         "https://localhost:7285",
-        "http://localhost:4200"
+        "http://localhost:4200",
+        "http://localhost:8085",
+        "https://bff.worldpinball.local",
+        "https://worldpinball.local"
       ],
       "attributes": {
         "pkce.code.challenge.method": "S256"

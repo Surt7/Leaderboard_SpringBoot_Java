@@ -17,6 +17,8 @@ public interface ScoreEntryRepository extends JpaRepository<ScoreEntry, UUID> {
 
     Optional<ScoreEntry> findBySessionIdAndSlotNumber(UUID sessionID, int slotNumber);
 
+    long countBySessionId(UUID sessionId);
+
     @Query("""
             SELECT s FROM ScoreEntry s
             WHERE s.ipId= :ipId

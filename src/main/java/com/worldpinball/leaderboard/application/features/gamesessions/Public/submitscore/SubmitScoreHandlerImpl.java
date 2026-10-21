@@ -131,7 +131,9 @@ public class SubmitScoreHandlerImpl implements SubmitScoreHandler {
             entriesToSave.add(entry);
         }
 
-        if (session != null) {
+        long totalScores = scoreEntryRepository.countBySessionId(command.sessionId()) + entriesToSave.size();
+        int expectedPlayers = (session != null && !session.getPlayers().isEmpty()) ? session.getPlayers().size() : 1;
+        if (session != null && totalScores >= expectedPlayers) {
             session.endSession(nowUtc);
             gameSessionRepository.save(session);
         }

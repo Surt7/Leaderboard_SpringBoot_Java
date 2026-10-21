@@ -35,3 +35,8 @@ build/
 ### Local Environment ###
 .env
 
+# Certificates & Private Keys
+docker/nginx/certs/*
+!docker/nginx/certs/.gitkeep
+
+

@@ -216,14 +216,14 @@ public class GameSessionGrpcService extends GameSessionServiceGrpc.GameSessionSe
 
         // Send initial snapshot
         GetLobbyResult initialResult = getLobbyHandler.handle(new GetLobbyQuery(sessionId));
-        if (!(initialResult instanceof GetLobbyResult.Success initialSuccess)) {
+        if (!(initialResult instanceof GetLobbyResult.Success(SessionLobbyDto lobby1))) {
             responseObserver.onError(Status.NOT_FOUND.withDescription("Session not found.").asRuntimeException());
             return;
         }
 
-        responseObserver.onNext(mapToLobbyResponse(initialSuccess.lobby()));
+        responseObserver.onNext(mapToLobbyResponse(lobby1));
 
-        if (isTerminal(initialSuccess.lobby().sessionState())) {
+        if (isTerminal(lobby1.sessionState())) {
             responseObserver.onCompleted();
             return;
         }
@@ -275,8 +275,8 @@ public class GameSessionGrpcService extends GameSessionServiceGrpc.GameSessionSe
         List<UUID> activeSessionIds = gameSessionRepository.findActiveSessionIds();
         for (UUID activeId : activeSessionIds) {
             GetLobbyResult initial = getLobbyHandler.handle(new GetLobbyQuery(activeId));
-            if (initial instanceof GetLobbyResult.Success success) {
-                responseObserver.onNext(mapToLobbyResponse(success.lobby()));
+            if (initial instanceof GetLobbyResult.Success(SessionLobbyDto lobby)) {
+                responseObserver.onNext(mapToLobbyResponse(lobby));
             }
         }
 
@@ -290,10 +290,10 @@ public class GameSessionGrpcService extends GameSessionServiceGrpc.GameSessionSe
                 return;
             }
             GetLobbyResult update = getLobbyHandler.handle(new GetLobbyQuery(sid));
-            if (update instanceof GetLobbyResult.Success success) {
+            if (update instanceof GetLobbyResult.Success(SessionLobbyDto lobby)) {
                 synchronized (responseObserver) {
                     if (!completed.get()) {
-                        responseObserver.onNext(mapToLobbyResponse(success.lobby()));
+                        responseObserver.onNext(mapToLobbyResponse(lobby));
                     }
                 }
             }

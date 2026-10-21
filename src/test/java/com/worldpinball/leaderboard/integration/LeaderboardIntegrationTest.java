@@ -84,9 +84,13 @@ class LeaderboardIntegrationTest {
         rawMachine.completeEnrollment(Instant.now());
         machine = machineRepository.save(rawMachine);
 
-        session = gameSessionRepository.save(new GameSession(
+        GameSession rawSession = new GameSession(
             machine.getMachineId(), device.getDeviceId(), gameMode.getModeId(), "1.0.0", "nonce-" + UUID.randomUUID(), Instant.now(), null
-        ));
+        );
+        rawSession.addPlayer(1, UUID.randomUUID());
+        rawSession.addPlayer(2, UUID.randomUUID());
+        rawSession.launch(Instant.now());
+        session = gameSessionRepository.save(rawSession);
     }
 
     @Test
