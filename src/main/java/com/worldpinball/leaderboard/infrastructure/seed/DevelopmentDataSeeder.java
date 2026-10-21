@@ -91,6 +91,7 @@ public class DevelopmentDataSeeder implements ApplicationRunner {
 
         // 2. Game Modes
         List<GameMode> modes = List.of(
+                new GameMode("mode-1", "Standard Mode", "Default game mode for test tools and devices", true, now, UUID.randomUUID()),
                 new GameMode("classic", "Classic Mode", "Standard 3-ball play", true, now, UUID.randomUUID()),
                 new GameMode("timed", "Timed Rush", "Score as many points in 2 minutes", true, now, UUID.randomUUID()),
                 new GameMode("multiball", "Multiball Madness", "Continuous multiball frenzy", true, now, UUID.randomUUID()),
