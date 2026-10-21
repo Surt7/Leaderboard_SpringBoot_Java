@@ -11,9 +11,14 @@ services:
       - "4327:4317" # OTLP gRPC (Java)
       - "4328:4318" # OTLP HTTP (Java)
       - "8890:8889" # Prometheus metrics scraped by Prometheus
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     depends_on:
       - tempo
       - loki
+    networks:
+      - default
+      - app-net
     restart: unless-stopped
 
   tempo:
@@ -37,6 +42,11 @@ services:
       - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
     ports:
       - "9091:9090"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    networks:
+      - default
+      - app-net
     restart: unless-stopped
 
   loki:
@@ -65,3 +75,9 @@ services:
       - prometheus
       - loki
     restart: unless-stopped
+
+networks:
+  default:
+  app-net:
+    name: worldpinball-java-dev_default
+    external: true

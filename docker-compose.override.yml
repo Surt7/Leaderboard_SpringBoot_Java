@@ -63,6 +63,10 @@ services:
       - KAFKA_BOOTSTRAP_SERVERS=kafka:29092
       - KAFKA_LISTENER_AUTO_STARTUP=false
       - MANAGEMENT_HEALTH_SHOW_DETAILS=never
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4318
+      - OTEL_EXPORTER_OTLP_TRACES_ENDPOINT=http://otel-collector:4318/v1/traces
+      - OTEL_EXPORTER_OTLP_METRICS_ENDPOINT=http://otel-collector:4318/v1/metrics
+      - OTEL_SERVICE_NAME=worldpinball-java-api
     ports:
       - "7085:7085"
       - "9090:9090"
@@ -101,6 +105,10 @@ services:
       - OAUTH2_ISSUER_URI=https://auth.worldpinball.local/realms/worldpinball
       - GRPC_CLIENT_GAMESESSIONSERVICE_ADDRESS=static://api:9090
       - GRPC_CLIENT_GAMESESSIONSERVICE_NEGOTIATION_TYPE=plaintext
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4318
+      - OTEL_EXPORTER_OTLP_TRACES_ENDPOINT=http://otel-collector:4318/v1/traces
+      - OTEL_EXPORTER_OTLP_METRICS_ENDPOINT=http://otel-collector:4318/v1/metrics
+      - OTEL_SERVICE_NAME=worldpinball-java-bff
     ports:
       - "8085:8085"
     volumes:
