@@ -46,6 +46,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+    image: worldpinball-java-api:dev
     container_name: worldpinball-java-api
     restart: unless-stopped
     environment:
@@ -88,6 +89,7 @@ services:
     build:
       context: ../Leaderboard_Bff_Java
       dockerfile: Dockerfile
+    image: worldpinball-java-bff:dev
     container_name: worldpinball-java-bff
     restart: unless-stopped
     environment:
