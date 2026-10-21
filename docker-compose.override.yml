@@ -53,6 +53,7 @@ services:
     restart: unless-stopped
     environment:
       - PORT=7085
+      - SERVER_FORWARD_HEADERS_STRATEGY=framework
       - GRPC_PORT=9090
       - DB_HOST=db
       - DB_PORT=5432
@@ -100,6 +101,8 @@ services:
     restart: unless-stopped
     environment:
       - PORT=8085
+      - SERVER_FORWARD_HEADERS_STRATEGY=framework
+      - SERVER_MAX_HTTP_REQUEST_HEADER_SIZE=64KB
       - CORE_API_URL=http://api:7085
       - REDIS_HOST=redis
       - REDIS_PORT=6379
