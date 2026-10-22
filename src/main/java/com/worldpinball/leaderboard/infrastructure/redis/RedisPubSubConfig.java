@@ -27,7 +27,6 @@ public class RedisPubSubConfig {
     public static final String LOBBY_UPDATES_CHANNEL = LobbyNotificationServiceImpl.REDIS_LOBBY_CHANNEL;
 
     @Bean
-    @ConditionalOnBean(RedisConnectionFactory.class)
     public RedisMessageListenerContainer redisMessageListenerContainer(
             RedisConnectionFactory connectionFactory,
             MessageListenerAdapter lobbyUpdatesListenerAdapter) {

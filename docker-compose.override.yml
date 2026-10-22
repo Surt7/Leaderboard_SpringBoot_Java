@@ -42,7 +42,7 @@ services:
           - worldpinball.local
     restart: unless-stopped
 
-  # Core API service (containerized)
+  # Core API service (containerized - Replica 1)
   api:
     profiles: ["apps"]
     build:
@@ -71,7 +71,7 @@ services:
       - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4318
       - OTEL_EXPORTER_OTLP_TRACES_ENDPOINT=http://otel-collector:4318/v1/traces
       - OTEL_EXPORTER_OTLP_METRICS_ENDPOINT=http://otel-collector:4318/v1/metrics
-      - OTEL_SERVICE_NAME=worldpinball-java-api
+      - OTEL_SERVICE_NAME=worldpinball-java-api-1
     ports:
       - "7085:7085"
       - "9090:9090"
@@ -91,6 +91,48 @@ services:
           target: /app/classes
         - action: rebuild
           path: ./pom.xml
+
+  # Core API service (containerized - Replica 2 for Load Balancing)
+  api-2:
+    profiles: ["apps"]
+    image: worldpinball-java-api:dev
+    container_name: worldpinball-java-api-2
+    restart: unless-stopped
+    environment:
+      - PORT=7085
+      - SERVER_FORWARD_HEADERS_STRATEGY=framework
+      - GRPC_PORT=9090
+      - DB_HOST=db
+      - DB_PORT=5432
+      - DB_NAME=worldpinball
+      - DB_USER=postgres
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
+      - KAFKA_BOOTSTRAP_SERVERS=kafka:29092
+      - KAFKA_LISTENER_AUTO_STARTUP=false
+      - MANAGEMENT_HEALTH_SHOW_DETAILS=never
+      - KEYCLOAK_JWKS_URI=http://keycloak:8080/realms/worldpinball/protocol/openid-connect/certs
+      - OAUTH2_ISSUER_URI=https://auth.worldpinball.local/realms/worldpinball
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4318
+      - OTEL_EXPORTER_OTLP_TRACES_ENDPOINT=http://otel-collector:4318/v1/traces
+      - OTEL_EXPORTER_OTLP_METRICS_ENDPOINT=http://otel-collector:4318/v1/metrics
+      - OTEL_SERVICE_NAME=worldpinball-java-api-2
+    ports:
+      - "7086:7085"
+      - "9091:9090"
+    volumes:
+      - ./docker/nginx/certs/dev-rootCA.pem:/app/certs/dev-rootCA.pem:ro
+    depends_on:
+      api:
+        condition: service_started
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      kafka:
+        condition: service_started
 
   # BFF Gateway service (containerized)
   bff:
