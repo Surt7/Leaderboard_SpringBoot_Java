@@ -271,6 +271,7 @@ public class GameSessionGrpcService extends GameSessionServiceGrpc.GameSessionSe
 
     @Override
     public void watchAllLobbies(WatchAllLobbiesRequest request, StreamObserver<SessionLobbyResponse> responseObserver) {
+        log.info("watchAllLobbies: Client subscribed to global stream");
         // 1. Initial snapshot: send all currently active sessions
         List<UUID> activeSessionIds = gameSessionRepository.findActiveSessionIds();
         for (UUID activeId : activeSessionIds) {
@@ -289,13 +290,17 @@ public class GameSessionGrpcService extends GameSessionServiceGrpc.GameSessionSe
             if (completed.get()) {
                 return;
             }
+            log.info("watchAllLobbies: notification received for session {}", sid);
             GetLobbyResult update = getLobbyHandler.handle(new GetLobbyQuery(sid));
             if (update instanceof GetLobbyResult.Success(SessionLobbyDto lobby)) {
+                log.info("watchAllLobbies: broadcasting gRPC update for session {} state={}", sid, lobby.sessionState());
                 synchronized (responseObserver) {
                     if (!completed.get()) {
                         responseObserver.onNext(mapToLobbyResponse(lobby));
                     }
                 }
+            } else {
+                log.warn("watchAllLobbies: could not resolve lobby for session {}: {}", sid, update);
             }
         });
 
